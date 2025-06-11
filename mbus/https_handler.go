@@ -69,6 +69,10 @@ func (h HTTPSHandler) Send(target boshhandler.Target, topic boshhandler.Topic, m
 	return nil
 }
 
+func (h HTTPSHandler) Request(target boshhandler.Target, topic boshhandler.Topic, message interface{}, response interface{}) error {
+	return nil
+}
+
 func (h HTTPSHandler) agentHandler(handlerFunc boshhandler.Func) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {

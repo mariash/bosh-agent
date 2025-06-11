@@ -12,6 +12,7 @@ import (
 
 	boshalert "github.com/cloudfoundry/bosh-agent/v2/agent/alert"
 	boshas "github.com/cloudfoundry/bosh-agent/v2/agent/applier/applyspec"
+	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
 	boshjobsuper "github.com/cloudfoundry/bosh-agent/v2/jobsupervisor"
 	boshplatform "github.com/cloudfoundry/bosh-agent/v2/platform"
@@ -38,6 +39,7 @@ type StartManager interface {
 type Agent struct {
 	logger            boshlog.Logger
 	mbusHandler       boshhandler.Handler
+	agentServer       boshagentserver.AgentServer
 	platform          boshplatform.Platform
 	actionDispatcher  ActionDispatcher
 	heartbeatInterval time.Duration
@@ -52,6 +54,7 @@ type Agent struct {
 func New(
 	logger boshlog.Logger,
 	mbusHandler boshhandler.Handler,
+	agentServer boshagentserver.AgentServer,
 	platform boshplatform.Platform,
 	actionDispatcher ActionDispatcher,
 	jobSupervisor boshjobsuper.JobSupervisor,
@@ -65,6 +68,7 @@ func New(
 	return Agent{
 		logger:            logger,
 		mbusHandler:       mbusHandler,
+		agentServer:       agentServer,
 		platform:          platform,
 		actionDispatcher:  actionDispatcher,
 		heartbeatInterval: heartbeatInterval,
@@ -93,6 +97,8 @@ func (a Agent) Run() error {
 
 	go a.generateHeartbeats(errCh)
 
+	go a.startAgentServer(errCh)
+
 	go func() {
 		err := a.jobSupervisor.MonitorJobFailures(a.handleJobFailure(errCh))
 		if err != nil {
@@ -105,8 +111,7 @@ func (a Agent) Run() error {
 
 func (a Agent) subscribeActionDispatcher(errCh chan error) {
 	defer a.logger.HandlePanic("Agent Message Bus Handler")
-
-	err := a.mbusHandler.Run(a.actionDispatcher.Dispatch)
+	err := a.mbusHandler.Run(a.actionDispatcher.DispatchDirectorRequest)
 	if err != nil {
 		err = bosherr.WrapError(err, "Message Bus Handler")
 	}
@@ -129,6 +134,15 @@ func (a Agent) generateHeartbeats(errCh chan error) {
 		case <-tickChan:
 			a.sendAndRecordHeartbeat(errCh, true)
 		}
+	}
+}
+
+func (a Agent) startAgentServer(errCh chan error) {
+	err := a.agentServer.Start(a.actionDispatcher.DispatchAgentRequest)
+	if err != nil {
+		err = bosherr.WrapError(err, "Starting agent server")
+		errCh <- err
+		return
 	}
 }
 

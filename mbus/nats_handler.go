@@ -41,6 +41,7 @@ type Handler interface {
 	Start(boshhandler.Func) error
 	RegisterAdditionalFunc(boshhandler.Func)
 	Send(target boshhandler.Target, topic boshhandler.Topic, message interface{}) error
+	Request(target boshhandler.Target, topic boshhandler.Topic, message interface{}, response interface{}) error
 	Stop()
 }
 
@@ -51,6 +52,7 @@ type NatsConnector func(url string, options ...nats.Option) (NatsConnection, err
 type NatsConnection interface {
 	Close()
 	Publish(subj string, data []byte) error
+	Request(subj string, data []byte, timeout time.Duration) (*nats.Msg, error)
 	Subscribe(subj string, cb nats.MsgHandler) (*nats.Subscription, error)
 }
 
@@ -131,6 +133,9 @@ func (h *natsHandler) Start(handlerFunc boshhandler.Func) error {
 	if net.ParseIP(connectionInfo.IP) != nil {
 		h.arpClean()
 	}
+
+	settings := h.settingsService.GetSettings()
+
 	var natsOptions = []nats.Option{
 		nats.RetryOnFailedConnect(true),
 		nats.DisconnectErrHandler(func(c *nats.Conn, err error) {
@@ -162,6 +167,7 @@ func (h *natsHandler) Start(handlerFunc boshhandler.Func) error {
 		}),
 		nats.MaxReconnects(-1),
 		nats.Secure(connectionInfo.TLSConfig),
+		nats.CustomInboxPrefix(fmt.Sprintf("agent.inbox.%s", settings.AgentID)),
 	}
 
 	connection, err := h.connector(connectionInfo.Addr, natsOptions...)
@@ -172,10 +178,7 @@ func (h *natsHandler) Start(handlerFunc boshhandler.Func) error {
 
 	h.connection = connection
 
-	settings := h.settingsService.GetSettings()
-
 	subject := fmt.Sprintf("agent.%s", settings.AgentID)
-
 	h.logger.Info(h.logTag, "Subscribing to %s", subject)
 
 	_, err = h.connection.Subscribe(subject, func(natsMsg *nats.Msg) {
@@ -217,6 +220,35 @@ func (h *natsHandler) Send(target boshhandler.Target, topic boshhandler.Topic, m
 	subject := fmt.Sprintf("%s.agent.%s.%s", target, topic, settings.AgentID)
 	if h.connection != nil {
 		return h.connection.Publish(subject, bytes)
+	}
+	return nil
+}
+
+func (h *natsHandler) Request(target boshhandler.Target, topic boshhandler.Topic, message interface{}, response interface{}) error {
+	bytes, err := json.Marshal(message)
+	if err != nil {
+		return bosherr.WrapErrorf(err, "Marshalling message (target=%s, topic=%s): %#v", target, topic, message)
+	}
+
+	h.logger.Info(h.logTag, "Sending %s message '%s'", target, topic)
+	h.logger.DebugWithDetails(h.logTag, "Message Payload", string(bytes))
+
+	if h.connection == nil {
+		return bosherr.WrapErrorf(err, "Connection to NATS is not established yet")
+	}
+
+	settings := h.settingsService.GetSettings()
+	subject := fmt.Sprintf("%s.agent.%s.%s", target, topic, settings.AgentID)
+	natsMsg, err := h.connection.Request(subject, bytes, 5*time.Minute) // TODO: set this timeout
+	if err != nil {
+		return bosherr.WrapErrorf(err, "Sending Request message (target=%s, topic=%s): %#v", target, topic, message)
+	}
+
+	h.logger.DebugWithDetails(h.logTag, "Received response", string(natsMsg.Data))
+
+	err = json.Unmarshal(natsMsg.Data, response)
+	if err != nil {
+		return bosherr.WrapErrorf(err, "Unmarshalling Request message response (target=%s, topic=%s): %#v", target, topic, message)
 	}
 	return nil
 }

@@ -10,4 +10,5 @@ type Handler interface {
 	RegisterAdditionalFunc(handlerFunc Func)
 
 	Send(target Target, topic Topic, message interface{}) error
+	Request(target Target, topic Topic, message interface{}, response interface{}) error
 }

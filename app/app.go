@@ -30,6 +30,7 @@ import (
 	"github.com/cloudfoundry/bosh-agent/v2/agent/httpblobprovider/blobstore_delegator"
 	boshscript "github.com/cloudfoundry/bosh-agent/v2/agent/script"
 	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
+	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshinf "github.com/cloudfoundry/bosh-agent/v2/infrastructure"
 	boshjobsuper "github.com/cloudfoundry/bosh-agent/v2/jobsupervisor"
 	boshmonit "github.com/cloudfoundry/bosh-agent/v2/jobsupervisor/monit"
@@ -206,7 +207,7 @@ func (app *app) Setup(opts Options) error {
 		app.logger,
 	)
 
-	actionFactory := boshaction.NewFactory(
+	directorActionFactory := boshaction.NewFactory(
 		settingsService,
 		app.platform,
 		sensitiveBlobManager,
@@ -221,13 +222,17 @@ func (app *app) Setup(opts Options) error {
 		blobstoreDelegator,
 	)
 
+	directorClient := boshagentserver.NewDirectorClient(mbusHandler)
+	agentActionFactory := boshaction.NewAgentActionFactory(directorClient, specService)
+
 	actionRunner := boshaction.NewRunner()
 
 	actionDispatcher := boshagent.NewActionDispatcher(
 		app.logger,
 		taskService,
 		taskManager,
-		actionFactory,
+		directorActionFactory,
+		agentActionFactory,
 		actionRunner,
 	)
 
@@ -237,9 +242,12 @@ func (app *app) Setup(opts Options) error {
 		app.dirProvider,
 	)
 
+	agentServer := boshagentserver.NewSocketServer("/var/vcap/bosh/agent.sock", taskService)
+
 	app.agent = boshagent.New(
 		app.logger,
 		mbusHandler,
+		agentServer,
 		app.platform,
 		actionDispatcher,
 		jobSupervisor,
