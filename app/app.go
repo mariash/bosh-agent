@@ -223,7 +223,7 @@ func (app *app) Setup(opts Options) error {
 	)
 
 	directorClient := boshagentserver.NewDirectorClient(mbusHandler)
-	agentActionFactory := boshaction.NewAgentActionFactory(directorClient, specService)
+	agentActionFactory := boshaction.NewAgentActionFactory(directorClient, specService, settingsService.GetSettings(), app.platform)
 
 	actionRunner := boshaction.NewRunner()
 

@@ -184,6 +184,20 @@ func (s Settings) GetNtpServers() []string {
 	return s.NTP
 }
 
+func (s Settings) DynamicDiskSettings(diskName string, diskHint string) DiskSettings {
+	diskSettings := DiskSettings{
+		ID: diskName,
+	}
+	diskSettings.Path = diskHint
+	diskSettings.VolumeID = diskHint
+
+	diskSettings.FileSystemType = s.Env.PersistentDiskFS
+	diskSettings.MountOptions = s.Env.PersistentDiskMountOptions
+	diskSettings.Partitioner = s.Env.PersistentDiskPartitioner
+
+	return diskSettings
+}
+
 func (s Settings) populatePersistentDiskSettings(diskID string, settingsInfo interface{}) DiskSettings {
 	diskSettings := DiskSettings{
 		ID: diskID,

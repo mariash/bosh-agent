@@ -6,18 +6,24 @@ import (
 	boshas "github.com/cloudfoundry/bosh-agent/v2/agent/applier/applyspec"
 	"github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
+	boshplatform "github.com/cloudfoundry/bosh-agent/v2/platform"
+	boshsettings "github.com/cloudfoundry/bosh-agent/v2/settings"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 type ProvideDynamicDiskAction struct {
 	directorClient boshagentserver.DirectorClient
 	specService    boshas.V1Service
+	settings       boshsettings.Settings
+	platform       boshplatform.Platform
 }
 
-func NewProvideDynamicDiskAction(directorClient agentserver.DirectorClient, specService boshas.V1Service) ProvideDynamicDiskAction {
+func NewProvideDynamicDiskAction(directorClient agentserver.DirectorClient, specService boshas.V1Service, settings boshsettings.Settings, platform boshplatform.Platform) ProvideDynamicDiskAction {
 	return ProvideDynamicDiskAction{
 		directorClient: directorClient,
 		specService:    specService,
+		settings:       settings,
+		platform:       platform,
 	}
 }
 
@@ -36,6 +42,12 @@ func (a ProvideDynamicDiskAction) Run() (interface{}, error) {
 	})
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Sending provide disk request to director")
+	}
+
+	diskSettings := a.settings.DynamicDiskSettings(resp.DiskName, resp.DiskHint)
+	err = a.platform.SetupDynamicDisk(diskSettings)
+	if err != nil {
+		return nil, bosherr.WrapError(err, "Setting up dynamic disk")
 	}
 	return resp, nil
 }

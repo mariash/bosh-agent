@@ -141,6 +141,10 @@ func (p dummyPlatform) SetupRootDisk(ephemeralDiskPath string) (err error) {
 	return
 }
 
+func (p dummyPlatform) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) (err error) {
+	return
+}
+
 func (p dummyPlatform) SetupSSH(publicKey []string, username string) (err error) {
 	return
 }
