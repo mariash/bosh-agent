@@ -87,7 +87,7 @@ type Platform interface {
 	IsPersistentDiskMounted(diskSettings boshsettings.DiskSettings) (result bool, err error)
 	IsPersistentDiskMountable(diskSettings boshsettings.DiskSettings) (bool, error)
 	AssociateDisk(name string, settings boshsettings.DiskSettings) error
-	SetupDynamicDisk(diskSetting boshsettings.DiskSettings) error
+	SetupDynamicDisk(diskSetting boshsettings.DiskSettings) (devicePath string, err error)
 
 	GetFileContentsFromCDROM(filePath string) (contents []byte, err error)
 	GetFilesContentsFromDisk(diskPath string, fileNames []string) (contents [][]byte, err error)

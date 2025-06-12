@@ -13,13 +13,10 @@ import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
-type TaskResponse struct {
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
+type TaskStatusResponse struct {
+	State  string      `json:"state"`
+	Result interface{} `json:"result,omitempty"`
+	Error  string      `json:"error,omitempty"`
 }
 
 type socketServer struct {
@@ -56,9 +53,9 @@ func (s *socketServer) Start(handlerFunc boshhandler.Func) error {
 		s.provideDisk(w, r, handlerFunc)
 	})
 
-	mux.HandleFunc("GET /tasks/{id}", s.taskStatus)
 	mux.HandleFunc("POST /disks/{id}/detach", s.detachDisk)
 	mux.HandleFunc("DELETE /disks/{id}", s.deleteDisk)
+	mux.HandleFunc("GET /tasks/{id}", s.taskStatus)
 
 	server := &http.Server{
 		Handler: mux,
@@ -81,7 +78,7 @@ func (s *socketServer) Stop() error {
 func (s *socketServer) provideDisk(w http.ResponseWriter, r *http.Request, handlerFunc boshhandler.Func) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.respond(w, http.StatusBadRequest, ErrorResponse{Error: "Failed to read request"})
+		s.respond(w, http.StatusBadRequest, boshhandler.NewExceptionResponse(err))
 		return
 	}
 	defer r.Body.Close()
@@ -96,37 +93,47 @@ func (s *socketServer) provideDisk(w http.ResponseWriter, r *http.Request, handl
 func (s *socketServer) detachDisk(w http.ResponseWriter, r *http.Request) {
 }
 
+func (s *socketServer) deleteDisk(w http.ResponseWriter, r *http.Request) {
+}
+
 func (s *socketServer) taskStatus(w http.ResponseWriter, r *http.Request) {
 	taskID := r.PathValue("id")
 	task, found := s.taskService.FindTaskWithID(taskID)
 	if !found {
-		s.respond(w, http.StatusNotFound, ErrorResponse{Error: fmt.Sprintf("Task %s not found", taskID)})
+		s.respond(w, http.StatusNotFound, boshhandler.NewExceptionResponse(fmt.Errorf("task %s not found", taskID)))
 		return
 	}
 
-	resp := TaskResponse{Status: string(task.State)}
+	resp := TaskStatusResponse{State: string(task.State)}
+
 	if task.Error != nil {
 		resp.Error = task.Error.Error()
+	} else {
+		resp.Result = task.Value
 	}
-	s.respond(w, http.StatusOK, resp)
-}
 
-func (s *socketServer) deleteDisk(w http.ResponseWriter, r *http.Request) {
+	s.respond(w, http.StatusOK, resp)
 }
 
 func (s *socketServer) respond(w http.ResponseWriter, statusCode int, resp interface{}) {
 	respBytes, err := json.Marshal(resp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		// TODO
+		resp := boshhandler.NewExceptionResponse(err)
+		respBytes, err := json.Marshal(resp)
+		if err == nil {
+			w.Write(respBytes)
+		}
 		return
 	}
 
 	w.WriteHeader(statusCode)
 	_, err = w.Write(respBytes)
 	if err != nil {
-		// TODO: provide nice error
-		//err = bosherr.WrapError(err, "Writing response")
-		//h.logger.Error(httpsHandlerLogTag, err.Error())
+		resp := boshhandler.NewExceptionResponse(err)
+		respBytes, err := json.Marshal(resp)
+		if err == nil {
+			w.Write(respBytes)
+		}
 	}
 }

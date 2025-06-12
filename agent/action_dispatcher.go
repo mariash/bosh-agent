@@ -120,13 +120,13 @@ func (dispatcher concreteActionDispatcher) DispatchAgentRequest(req boshhandler.
 		return boshhandler.NewExceptionResponse(err)
 	}
 
-	return boshhandler.NewValueResponse(stateValue)
+	return boshhandler.NewTaskResponse(stateValue.AgentTaskID, stateValue.State)
 }
 
 func (dispatcher concreteActionDispatcher) dispatchAsynchronousAction(
 	action boshaction.Action,
 	req boshhandler.Request,
-) (interface{}, error) {
+) (boshtask.StateValue, error) {
 	dispatcher.logger.Info(actionDispatcherLogTag, "Running async action %s", req.Method)
 
 	var task boshtask.Task

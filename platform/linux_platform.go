@@ -719,25 +719,11 @@ func (p linux) SetupEphemeralDiskWithPath(realPath string, desiredSwapSizeInByte
 	return nil
 }
 
-func (p linux) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) error {
+func (p linux) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) (string, error) {
 	p.logger.Info(logTag, "Setting up dynamic disk...")
 	devicePath, _, err := p.devicePathResolver.GetRealDevicePath(diskSetting)
 	if err != nil {
-		return bosherr.WrapError(err, "Getting real device path")
-	}
-
-	firstPartitionPath := p.partitionPath(devicePath, 1)
-	partitioner, err := p.diskManager.GetPersistentDevicePartitioner(diskSetting.Partitioner)
-	if err != nil {
-		return bosherr.WrapError(err, "Selecting partitioner")
-	}
-
-	singlePartPartitioning := []boshdisk.Partition{
-		{Type: boshdisk.PartitionTypeLinux},
-	}
-	err = partitioner.Partition(devicePath, singlePartPartitioning)
-	if err != nil {
-		return bosherr.WrapError(err, "Partitioning disk")
+		return "", bosherr.WrapError(err, "Getting real device path")
 	}
 
 	persistentDiskFS := diskSetting.FileSystemType
@@ -748,15 +734,15 @@ func (p linux) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) error {
 	case boshdisk.FileSystemSwap:
 		fallthrough
 	default:
-		return bosherr.Error(fmt.Sprintf(`The filesystem type "%s" is not supported`, diskSetting.FileSystemType))
+		return "", bosherr.Error(fmt.Sprintf(`The filesystem type "%s" is not supported`, diskSetting.FileSystemType))
 	}
 
-	err = p.diskManager.GetFormatter().Format(firstPartitionPath, persistentDiskFS)
+	err = p.diskManager.GetFormatter().Format(devicePath, persistentDiskFS)
 	if err != nil {
-		return bosherr.WrapError(err, fmt.Sprintf("Formatting partition with %s", diskSetting.FileSystemType))
+		return "", bosherr.WrapError(err, fmt.Sprintf("Formatting partition with %s", diskSetting.FileSystemType))
 	}
 
-	return nil
+	return devicePath, nil
 }
 
 func (p linux) SetupRawEphemeralDisks(devices []boshsettings.DiskSettings) (err error) {

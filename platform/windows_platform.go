@@ -283,8 +283,8 @@ func (p WindowsPlatform) SetupBoshSettingsDisk() error {
 	return nil
 }
 
-func (p WindowsPlatform) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) error {
-	return nil
+func (p WindowsPlatform) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) (string, error) {
+	return "", nil
 }
 
 func (p WindowsPlatform) GetAgentSettingsPath(tmpfs bool) string {

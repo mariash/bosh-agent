@@ -18,6 +18,10 @@ type ProvideDynamicDiskAction struct {
 	platform       boshplatform.Platform
 }
 
+type ProvideDynamicDiskTaskResult struct {
+	DevicePath string `json:"device_path"`
+}
+
 func NewProvideDynamicDiskAction(directorClient agentserver.DirectorClient, specService boshas.V1Service, settings boshsettings.Settings, platform boshplatform.Platform) ProvideDynamicDiskAction {
 	return ProvideDynamicDiskAction{
 		directorClient: directorClient,
@@ -30,7 +34,7 @@ func NewProvideDynamicDiskAction(directorClient agentserver.DirectorClient, spec
 func (a ProvideDynamicDiskAction) Run(diskName string, diskPoolName string, diskSizeInMb uint) (interface{}, error) {
 	spec, err := a.specService.Get()
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Getting job spec")
+		return "", bosherr.WrapError(err, "Getting job spec")
 	}
 
 	resp, err := a.directorClient.ProvideDisk(boshagentserver.ProvideDiskRequest{
@@ -40,15 +44,16 @@ func (a ProvideDynamicDiskAction) Run(diskName string, diskPoolName string, disk
 		DiskPoolName: diskPoolName,
 	})
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Sending provide disk request to director")
+		return "", bosherr.WrapError(err, "Sending provide disk request to director")
 	}
 
 	diskSettings := a.settings.DynamicDiskSettings(resp.DiskName, resp.DiskHint)
-	err = a.platform.SetupDynamicDisk(diskSettings)
+	devicePath, err := a.platform.SetupDynamicDisk(diskSettings)
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Setting up dynamic disk")
+		return "", bosherr.WrapError(err, "Setting up dynamic disk")
 	}
-	return resp, nil
+
+	return ProvideDynamicDiskTaskResult{DevicePath: devicePath}, nil
 }
 
 func (a ProvideDynamicDiskAction) IsAsynchronous(_ ProtocolVersion) bool {

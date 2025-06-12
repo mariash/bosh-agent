@@ -141,7 +141,7 @@ func (p dummyPlatform) SetupRootDisk(ephemeralDiskPath string) (err error) {
 	return
 }
 
-func (p dummyPlatform) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) (err error) {
+func (p dummyPlatform) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) (devicePath string, err error) {
 	return
 }
 
