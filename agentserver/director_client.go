@@ -12,7 +12,7 @@ const ProvideDiskTopic = "disk.provide"
 
 type ProvideDiskRequest struct {
 	DiskName     string `json:"disk_name"`
-	DiskSizeInMb int    `json:"disk_size"`
+	DiskSizeInMb uint    `json:"disk_size"`
 	DiskPoolName string `json:"disk_pool_name"`
 
 	Deployment string `json:"deployment"`

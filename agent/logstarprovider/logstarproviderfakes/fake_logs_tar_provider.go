@@ -43,15 +43,16 @@ func (fake *FakeLogsTarProvider) CleanUp(arg1 string) error {
 	fake.cleanUpArgsForCall = append(fake.cleanUpArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.CleanUpStub
+	fakeReturns := fake.cleanUpReturns
 	fake.recordInvocation("CleanUp", []interface{}{arg1})
 	fake.cleanUpMutex.Unlock()
-	if fake.CleanUpStub != nil {
-		return fake.CleanUpStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.cleanUpReturns
 	return fakeReturns.result1
 }
 
@@ -109,15 +110,16 @@ func (fake *FakeLogsTarProvider) Get(arg1 string, arg2 []string) (string, error)
 		arg1 string
 		arg2 []string
 	}{arg1, arg2Copy})
+	stub := fake.GetStub
+	fakeReturns := fake.getReturns
 	fake.recordInvocation("Get", []interface{}{arg1, arg2Copy})
 	fake.getMutex.Unlock()
-	if fake.GetStub != nil {
-		return fake.GetStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.getReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 

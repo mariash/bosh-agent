@@ -83,6 +83,10 @@ func (h *FakeHandler) Send(target boshhandler.Target, topic boshhandler.Topic, m
 	return h.SendErr
 }
 
+func (h *FakeHandler) Request(target boshhandler.Target, topic boshhandler.Topic, message interface{}, response interface{}) error {
+	return nil
+}
+
 func (h *FakeHandler) SendInputs() []SendInput {
 	h.sendLock.Lock()
 	defer h.sendLock.Unlock()

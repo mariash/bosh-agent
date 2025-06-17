@@ -17,6 +17,7 @@ import (
 	boshas "github.com/cloudfoundry/bosh-agent/v2/agent/applier/applyspec"
 	fakeas "github.com/cloudfoundry/bosh-agent/v2/agent/applier/applyspec/fakes"
 	fakeagent "github.com/cloudfoundry/bosh-agent/v2/agent/fakes"
+	fakeagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver/agentserverfakes"
 	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
 	fakejobsuper "github.com/cloudfoundry/bosh-agent/v2/jobsupervisor/fakes"
 	fakembus "github.com/cloudfoundry/bosh-agent/v2/mbus/fakes"
@@ -31,6 +32,7 @@ func init() { //nolint:funlen,gochecknoinits
 		var (
 			logger           boshlog.Logger
 			handler          *fakembus.FakeHandler
+			agentServer      *fakeagentserver.FakeAgentServer
 			platform         *platformfakes.FakePlatform
 			actionDispatcher *fakeagent.FakeActionDispatcher
 			jobSupervisor    *fakejobsuper.FakeJobSupervisor
@@ -56,6 +58,7 @@ func init() { //nolint:funlen,gochecknoinits
 			timeService = fakeclock.NewFakeClock(time.Now())
 			vitalService = &vitalsfakes.FakeService{}
 			startManager = &agentfakes.FakeStartManager{}
+			agentServer = &fakeagentserver.FakeAgentServer{}
 			startManager.CanStartReturns(true)
 
 			platform.GetVitalsServiceReturns(vitalService)
@@ -63,6 +66,7 @@ func init() { //nolint:funlen,gochecknoinits
 			boshAgent = agent.New(
 				logger,
 				handler,
+				agentServer,
 				platform,
 				actionDispatcher,
 				jobSupervisor,
@@ -149,6 +153,7 @@ func init() { //nolint:funlen,gochecknoinits
 					boshAgent = agent.New(
 						logger,
 						handler,
+						agentServer,
 						platform,
 						actionDispatcher,
 						jobSupervisor,

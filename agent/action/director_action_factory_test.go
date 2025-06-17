@@ -28,7 +28,7 @@ import (
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/fake_clock.go code.cloudfoundry.org/clock.Clock
 
-var _ = Describe("concreteFactory", func() {
+var _ = Describe("directorActionFactory", func() {
 	var (
 		settingsService   *fakesettings.FakeSettingsService
 		platform          *platformfakes.FakePlatform
@@ -65,7 +65,7 @@ var _ = Describe("concreteFactory", func() {
 		logger = boshlog.NewLogger(boshlog.LevelNone)
 		blobDelegator = &fakeblobdelegator.FakeBlobstoreDelegator{}
 
-		factory = boshaction.NewFactory(
+		factory = boshaction.NewDirectorActionFactory(
 			settingsService,
 			platform,
 			blobManager,

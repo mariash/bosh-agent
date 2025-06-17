@@ -18,11 +18,11 @@ import (
 	boshsettings "github.com/cloudfoundry/bosh-agent/v2/settings"
 )
 
-type concreteFactory struct {
+type directorActionFactory struct {
 	availableActions map[string]Action
 }
 
-func NewFactory(
+func NewDirectorActionFactory(
 	settingsService boshsettings.Service,
 	platform boshplatform.Platform,
 	// TODO(ctz, ja): refactor the usage of blobstore as its a duplicate to the
@@ -42,7 +42,7 @@ func NewFactory(
 	certManager := platform.GetCertManager()
 	logsTarProvider := platform.GetLogsTarProvider()
 
-	return concreteFactory{
+	return directorActionFactory{
 		availableActions: map[string]Action{
 			// API
 			"ping": NewPing(),
@@ -96,7 +96,7 @@ func NewFactory(
 	}
 }
 
-func (f concreteFactory) Create(method string) (Action, error) {
+func (f directorActionFactory) Create(method string) (Action, error) {
 	action, found := f.availableActions[method]
 	if !found {
 		return nil, bosherr.Errorf("Could not create action with method %s", method)

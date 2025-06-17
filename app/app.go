@@ -207,7 +207,7 @@ func (app *app) Setup(opts Options) error {
 		app.logger,
 	)
 
-	directorActionFactory := boshaction.NewFactory(
+	directorActionFactory := boshaction.NewDirectorActionFactory(
 		settingsService,
 		app.platform,
 		sensitiveBlobManager,

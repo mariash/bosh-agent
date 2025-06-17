@@ -3,6 +3,7 @@ package mbusfakes
 
 import (
 	"sync"
+	"time"
 
 	"github.com/cloudfoundry/bosh-agent/v2/mbus"
 	nats "github.com/nats-io/nats.go"
@@ -24,6 +25,21 @@ type FakeNatsConnection struct {
 	}
 	publishReturnsOnCall map[int]struct {
 		result1 error
+	}
+	RequestStub        func(string, []byte, time.Duration) (*nats.Msg, error)
+	requestMutex       sync.RWMutex
+	requestArgsForCall []struct {
+		arg1 string
+		arg2 []byte
+		arg3 time.Duration
+	}
+	requestReturns struct {
+		result1 *nats.Msg
+		result2 error
+	}
+	requestReturnsOnCall map[int]struct {
+		result1 *nats.Msg
+		result2 error
 	}
 	SubscribeStub        func(string, nats.MsgHandler) (*nats.Subscription, error)
 	subscribeMutex       sync.RWMutex
@@ -134,6 +150,77 @@ func (fake *FakeNatsConnection) PublishReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeNatsConnection) Request(arg1 string, arg2 []byte, arg3 time.Duration) (*nats.Msg, error) {
+	var arg2Copy []byte
+	if arg2 != nil {
+		arg2Copy = make([]byte, len(arg2))
+		copy(arg2Copy, arg2)
+	}
+	fake.requestMutex.Lock()
+	ret, specificReturn := fake.requestReturnsOnCall[len(fake.requestArgsForCall)]
+	fake.requestArgsForCall = append(fake.requestArgsForCall, struct {
+		arg1 string
+		arg2 []byte
+		arg3 time.Duration
+	}{arg1, arg2Copy, arg3})
+	stub := fake.RequestStub
+	fakeReturns := fake.requestReturns
+	fake.recordInvocation("Request", []interface{}{arg1, arg2Copy, arg3})
+	fake.requestMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeNatsConnection) RequestCallCount() int {
+	fake.requestMutex.RLock()
+	defer fake.requestMutex.RUnlock()
+	return len(fake.requestArgsForCall)
+}
+
+func (fake *FakeNatsConnection) RequestCalls(stub func(string, []byte, time.Duration) (*nats.Msg, error)) {
+	fake.requestMutex.Lock()
+	defer fake.requestMutex.Unlock()
+	fake.RequestStub = stub
+}
+
+func (fake *FakeNatsConnection) RequestArgsForCall(i int) (string, []byte, time.Duration) {
+	fake.requestMutex.RLock()
+	defer fake.requestMutex.RUnlock()
+	argsForCall := fake.requestArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeNatsConnection) RequestReturns(result1 *nats.Msg, result2 error) {
+	fake.requestMutex.Lock()
+	defer fake.requestMutex.Unlock()
+	fake.RequestStub = nil
+	fake.requestReturns = struct {
+		result1 *nats.Msg
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeNatsConnection) RequestReturnsOnCall(i int, result1 *nats.Msg, result2 error) {
+	fake.requestMutex.Lock()
+	defer fake.requestMutex.Unlock()
+	fake.RequestStub = nil
+	if fake.requestReturnsOnCall == nil {
+		fake.requestReturnsOnCall = make(map[int]struct {
+			result1 *nats.Msg
+			result2 error
+		})
+	}
+	fake.requestReturnsOnCall[i] = struct {
+		result1 *nats.Msg
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeNatsConnection) Subscribe(arg1 string, arg2 nats.MsgHandler) (*nats.Subscription, error) {
 	fake.subscribeMutex.Lock()
 	ret, specificReturn := fake.subscribeReturnsOnCall[len(fake.subscribeArgsForCall)]
@@ -206,6 +293,8 @@ func (fake *FakeNatsConnection) Invocations() map[string][][]interface{} {
 	defer fake.closeMutex.RUnlock()
 	fake.publishMutex.RLock()
 	defer fake.publishMutex.RUnlock()
+	fake.requestMutex.RLock()
+	defer fake.requestMutex.RUnlock()
 	fake.subscribeMutex.RLock()
 	defer fake.subscribeMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

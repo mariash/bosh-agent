@@ -18,29 +18,29 @@ type ActionDispatcher interface {
 }
 
 type concreteActionDispatcher struct {
-	logger             boshlog.Logger
-	taskService        boshtask.Service
-	taskManager        boshtask.Manager
-	actionFactory      boshaction.Factory
-	agentActionFactory boshaction.Factory
-	actionRunner       boshaction.Runner
+	logger                boshlog.Logger
+	taskService           boshtask.Service
+	taskManager           boshtask.Manager
+	directorActionFactory boshaction.Factory
+	agentActionFactory    boshaction.Factory
+	actionRunner          boshaction.Runner
 }
 
 func NewActionDispatcher(
 	logger boshlog.Logger,
 	taskService boshtask.Service,
 	taskManager boshtask.Manager,
-	actionFactory boshaction.Factory,
+	directorActionFactory boshaction.Factory,
 	agentActionFactory boshaction.Factory,
 	actionRunner boshaction.Runner,
 ) (dispatcher ActionDispatcher) {
 	return concreteActionDispatcher{
-		logger:             logger,
-		taskService:        taskService,
-		taskManager:        taskManager,
-		actionFactory:      actionFactory,
-		agentActionFactory: agentActionFactory,
-		actionRunner:       actionRunner,
+		logger:                logger,
+		taskService:           taskService,
+		taskManager:           taskManager,
+		directorActionFactory: directorActionFactory,
+		agentActionFactory:    agentActionFactory,
+		actionRunner:          actionRunner,
 	}
 }
 
@@ -56,7 +56,7 @@ func (dispatcher concreteActionDispatcher) ResumePreviouslyDispatchedTasks() {
 	}
 
 	for _, taskInfo := range taskInfos {
-		action, err := dispatcher.actionFactory.Create(taskInfo.Method)
+		action, err := dispatcher.directorActionFactory.Create(taskInfo.Method)
 		if err != nil {
 			dispatcher.logger.Error(actionDispatcherLogTag, "Unknown action %s", taskInfo.Method)
 			if removeErr := dispatcher.taskManager.RemoveInfo(taskInfo.TaskID); removeErr != nil {
@@ -80,7 +80,7 @@ func (dispatcher concreteActionDispatcher) ResumePreviouslyDispatchedTasks() {
 }
 
 func (dispatcher concreteActionDispatcher) DispatchDirectorRequest(req boshhandler.Request) boshhandler.Response {
-	action, err := dispatcher.actionFactory.Create(req.Method)
+	action, err := dispatcher.directorActionFactory.Create(req.Method)
 	if err != nil {
 		dispatcher.logger.Error(actionDispatcherLogTag, "Unknown action %s", req.Method)
 		return boshhandler.NewExceptionResponse(bosherr.Errorf("unknown message %s", req.Method))

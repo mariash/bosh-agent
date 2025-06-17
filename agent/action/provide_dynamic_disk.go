@@ -27,8 +27,7 @@ func NewProvideDynamicDiskAction(directorClient agentserver.DirectorClient, spec
 	}
 }
 
-func (a ProvideDynamicDiskAction) Run() (interface{}, error) {
-	// TODO: add some validation
+func (a ProvideDynamicDiskAction) Run(diskName string, diskPoolName string, diskSizeInMb uint) (interface{}, error) {
 	spec, err := a.specService.Get()
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Getting job spec")
@@ -36,9 +35,9 @@ func (a ProvideDynamicDiskAction) Run() (interface{}, error) {
 
 	resp, err := a.directorClient.ProvideDisk(boshagentserver.ProvideDiskRequest{
 		Deployment:   spec.Deployment,
-		DiskSizeInMb: 1024,
-		DiskName:     "some-disk",
-		DiskPoolName: "1024",
+		DiskSizeInMb: diskSizeInMb,
+		DiskName:     diskName,
+		DiskPoolName: diskPoolName,
 	})
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Sending provide disk request to director")
