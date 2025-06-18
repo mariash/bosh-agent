@@ -522,6 +522,30 @@ var _ = Describe("Settings", func() {
 		})
 	})
 
+	Describe("DynamicDiskSettings", func() {
+		It("constructs dynamic disk settings based on disk name and hint", func() {
+			settingsJSON := `{
+						"env": {
+							"persistent_disk_fs": "xfs",
+							"persistent_disk_mount_options": ["opt1", "opt2"],
+							"persistent_disk_partitioner": "parted"
+						}
+					}`
+
+			err := json.Unmarshal([]byte(settingsJSON), &settings)
+			Expect(err).NotTo(HaveOccurred())
+			diskSettings := settings.DynamicDiskSettings("fake-disk-id", "/path/to/device/hint")
+			Expect(diskSettings).To(Equal(DiskSettings{
+				ID:             "fake-disk-id",
+				VolumeID:       "/path/to/device/hint",
+				Path:           "/path/to/device/hint",
+				FileSystemType: "xfs",
+				MountOptions:   []string{"opt1", "opt2"},
+				Partitioner:    "parted",
+			}))
+		})
+	})
+
 	Describe("DefaultNetworkFor", func() {
 		Context("when networks is empty", func() {
 			It("returns found=false", func() {

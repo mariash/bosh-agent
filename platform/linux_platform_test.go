@@ -1851,6 +1851,54 @@ Number  Start   End     Size    File system  Name             Flags
 		})
 	})
 
+	Describe("SetupDynamicDisk", func() {
+		Context("when real device path was resolved without an error", func() {
+			It("returns real device path", func() {
+				devicePathResolver.RealDevicePath = "fake-real-device-path"
+				realPath, err := platform.SetupDynamicDisk(boshsettings.DiskSettings{ID: "fake-device-id", FileSystemType: boshdisk.FileSystemExt4})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(realPath).To(Equal("fake-real-device-path"))
+
+				Expect(formatter.FormatCalled).To(BeTrue())
+				Expect(formatter.FormatPartitionPaths).To(ConsistOf("fake-real-device-path"))
+				Expect(formatter.FormatFsTypes).To(ConsistOf(boshdisk.FileSystemExt4))
+			})
+
+			Context("when filesystem is not supported", func() {
+				It("returns an error", func() {
+					devicePathResolver.RealDevicePath = "fake-real-device-path"
+					_, err := platform.SetupDynamicDisk(boshsettings.DiskSettings{ID: "fake-device-id", FileSystemType: "not-supported-filesystem"})
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring(`The filesystem type "not-supported-filesystem" is not supported`))
+
+					Expect(formatter.FormatCalled).To(BeFalse())
+				})
+			})
+
+			Context("when formatter returns an error", func() {
+				It("returns an error", func() {
+					devicePathResolver.RealDevicePath = "fake-real-device-path"
+					formatter.FormatError = errors.New("failed-to-format")
+					_, err := platform.SetupDynamicDisk(boshsettings.DiskSettings{ID: "fake-device-id", FileSystemType: boshdisk.FileSystemExt4})
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring(`failed-to-format`))
+
+					Expect(formatter.FormatCalled).To(BeTrue())
+				})
+			})
+		})
+
+		Context("when real device path was not resolved without an error", func() {
+			It("returns the error", func() {
+				devicePathResolver.GetRealDevicePathErr = errors.New("fake-get-real-device-path-err")
+				_, err := platform.SetupDynamicDisk(boshsettings.DiskSettings{ID: "fake-device-id"})
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring(`Getting real device path`))
+				Expect(formatter.FormatCalled).To(BeFalse())
+			})
+		})
+	})
+
 	Describe("SetupDataDir", func() {
 		It("creates jobs directory in data directory", func() {
 			err := platform.SetupDataDir(boshsettings.JobDir{}, boshsettings.RunDir{})
