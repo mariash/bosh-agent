@@ -274,13 +274,19 @@ func (h *natsHandler) VerifyPeerCertificate(rawCerts [][]byte, verifiedChains []
 }
 
 func (h *natsHandler) handleNatsMsg(natsMsg *nats.Msg, handlerFunc boshhandler.Func) {
-	respBytes, req, err := boshhandler.PerformHandlerWithJSON(
-		natsMsg.Data,
+	req, err := boshhandler.NewDirectorRequestFromJSON(natsMsg.Data)
+	if err != nil {
+		h.logger.Error(h.logTag, "Parsing request: %s", err)
+		h.generateCEFLog(natsMsg, 7, err.Error())
+		return
+	}
+
+	respBytes, err := boshhandler.PerformHandler(
+		req,
 		handlerFunc,
 		responseMaxLength,
 		h.logger,
 	)
-
 	if err != nil {
 		h.logger.Error(h.logTag, "Running handler: %s", err)
 		h.generateCEFLog(natsMsg, 7, err.Error())
@@ -288,7 +294,7 @@ func (h *natsHandler) handleNatsMsg(natsMsg *nats.Msg, handlerFunc boshhandler.F
 	}
 
 	if len(respBytes) > 0 {
-		err = h.connection.Publish(req.ReplyTo, respBytes)
+		err = h.connection.Publish(req.GetReplyTo(), respBytes)
 		if err != nil {
 			h.generateCEFLog(natsMsg, 7, err.Error())
 			h.logger.Error(h.logTag, "Publishing to the client: %s", err.Error())

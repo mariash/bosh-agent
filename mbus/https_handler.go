@@ -92,15 +92,24 @@ func (h HTTPSHandler) agentHandler(handlerFunc boshhandler.Func) func(http.Respo
 			return
 		}
 
-		respBytes, _, err := boshhandler.PerformHandlerWithJSON(
-			rawJSONPayload,
+		req, err := boshhandler.NewDirectorRequestFromJSON(rawJSONPayload)
+		if err != nil {
+			err = bosherr.WrapError(err, "Parsing request")
+			h.logger.Error(httpsHandlerLogTag, err.Error())
+			w.WriteHeader(400)
+			h.generateCEFLog(r, 400, "")
+
+			return
+		}
+
+		respBytes, err := boshhandler.PerformHandler(
+			req,
 			handlerFunc,
 			boshhandler.UnlimitedResponseLength,
 			h.logger,
 		)
-
 		if err != nil {
-			err = bosherr.WrapError(err, "Running handler in a nice JSON sandwich")
+			err = bosherr.WrapError(err, "Running handler")
 			h.logger.Error(httpsHandlerLogTag, err.Error())
 			w.WriteHeader(500)
 			h.generateCEFLog(r, 500, "")

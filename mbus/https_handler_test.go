@@ -95,9 +95,7 @@ var _ = Describe("HTTPSHandler", func() {
 
 			defer httpResponse.Body.Close() //nolint:errcheck
 
-			Expect(receivedRequest.ReplyTo).To(Equal("reply to me!"))
-			Expect(receivedRequest.Method).To(Equal("ping"))
-			Expect(receivedRequest.GetPayload()).To(Equal([]byte(postBody)))
+			Expect(receivedRequest).To(Equal(boshhandler.NewDirectorRequest("reply to me!", "ping", []byte(postBody), 0)))
 
 			httpBody, readErr := io.ReadAll(httpResponse.Body)
 			Expect(readErr).ToNot(HaveOccurred())
@@ -116,9 +114,7 @@ var _ = Describe("HTTPSHandler", func() {
 
 				defer httpResponse.Body.Close() //nolint:errcheck
 
-				Expect(receivedRequest.ReplyTo).To(Equal("reply to me!"))
-				Expect(receivedRequest.Method).To(Equal("ping"))
-				Expect(receivedRequest.GetPayload()).To(Equal([]byte(postBody)))
+				Expect(receivedRequest).To(Equal(boshhandler.NewDirectorRequest("reply to me!", "ping", []byte(postBody), 0)))
 
 				httpBody, readErr := io.ReadAll(httpResponse.Body)
 				Expect(readErr).ToNot(HaveOccurred())

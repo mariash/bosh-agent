@@ -90,10 +90,7 @@ func (s *socketServer) provideDisk(w http.ResponseWriter, r *http.Request, handl
 	}
 	defer r.Body.Close()
 
-	resp := handlerFunc(boshhandler.Request{
-		Method:  "provide_dynamic_disk",
-		Payload: body,
-	})
+	resp := handlerFunc(boshhandler.NewAgentRequest("provide_dynamic_disk", body))
 	s.respond(w, http.StatusOK, resp)
 }
 

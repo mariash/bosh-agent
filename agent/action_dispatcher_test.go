@@ -44,7 +44,7 @@ func init() { //nolint:funlen,gochecknoinits
 		It("responds with exception when the method is unknown", func() {
 			directorActionFactory.RegisterActionErr("fake-action", errors.New("fake-create-error"))
 
-			req := boshhandler.NewRequest("fake-reply", "fake-action", []byte{}, 0)
+			req := boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte{}, 0)
 			resp := dispatcher.DispatchDirectorRequest(req)
 			boshassert.MatchesJSONString(GinkgoT(), resp, `{"exception":{"message":"unknown message fake-action"}}`)
 		})
@@ -57,7 +57,7 @@ func init() { //nolint:funlen,gochecknoinits
 
 			Context("action is loggable", func() {
 				BeforeEach(func() {
-					req = boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
+					req = boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
 					action = &fakeaction.TestAction{Loggable: true}
 					directorActionFactory.RegisterAction("fake-action", action)
 					dispatcher.DispatchDirectorRequest(req)
@@ -67,13 +67,13 @@ func init() { //nolint:funlen,gochecknoinits
 					Expect(logger.DebugWithDetailsCallCount()).To(Equal(1))
 					_, message, args := logger.DebugWithDetailsArgsForCall(0)
 					Expect(message).To(Equal("Payload"))
-					Expect(args[0]).To(Equal(req.Payload))
+					Expect(args[0]).To(Equal(req.GetPayload()))
 				})
 			})
 
 			Context("action is not loggable", func() {
 				BeforeEach(func() {
-					req = boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
+					req = boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
 					action = &fakeaction.TestAction{Loggable: false}
 					directorActionFactory.RegisterAction("fake-action", action)
 					dispatcher.DispatchDirectorRequest(req)
@@ -97,7 +97,7 @@ func init() { //nolint:funlen,gochecknoinits
 			})
 
 			It("passes protocol version zero to IsSynchronous", func() {
-				req = boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), boshhandler.ProtocolVersion(0))
+				req = boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), boshhandler.ProtocolVersion(0))
 
 				dispatcher.DispatchDirectorRequest(req)
 
@@ -112,7 +112,7 @@ func init() { //nolint:funlen,gochecknoinits
 			})
 
 			It("passes protocol version to IsSynchronous", func() {
-				req = boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), boshhandler.ProtocolVersion(99))
+				req = boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), boshhandler.ProtocolVersion(99))
 				dispatcher.DispatchDirectorRequest(req)
 
 				_, err := taskService.StartedTasks["fake-generated-task-id"].Func()
@@ -138,7 +138,7 @@ func init() { //nolint:funlen,gochecknoinits
 			})
 
 			It("passes protocol version zero to IsSynchronous", func() {
-				req = boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), boshhandler.ProtocolVersion(0))
+				req = boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), boshhandler.ProtocolVersion(0))
 				dispatcher.DispatchDirectorRequest(req)
 
 				Expect(runAction.ProtocolVersion).To(Equal(action.ProtocolVersion(0)))
@@ -146,7 +146,7 @@ func init() { //nolint:funlen,gochecknoinits
 			})
 
 			It("passes protocol version to IsSynchronous", func() {
-				req = boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), boshhandler.ProtocolVersion(99))
+				req = boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), boshhandler.ProtocolVersion(99))
 				dispatcher.DispatchDirectorRequest(req)
 
 				Expect(runAction.ProtocolVersion).To(Equal(action.ProtocolVersion(99)))
@@ -160,7 +160,7 @@ func init() { //nolint:funlen,gochecknoinits
 			)
 
 			BeforeEach(func() {
-				req = boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
+				req = boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
 				directorActionFactory.RegisterAction("fake-action", &fakeaction.TestAction{Asynchronous: false})
 			})
 
@@ -176,7 +176,7 @@ func init() { //nolint:funlen,gochecknoinits
 				actionRunner.RunErr = errors.New("fake-run-error")
 
 				resp := dispatcher.DispatchDirectorRequest(req)
-				expectedJSON := fmt.Sprintf("{\"exception\":{\"message\":\"Action Failed %s: fake-run-error\"}}", req.Method)
+				expectedJSON := fmt.Sprintf("{\"exception\":{\"message\":\"Action Failed %s: fake-run-error\"}}", req.GetMethod())
 				boshassert.MatchesJSONString(GinkgoT(), resp, expectedJSON)
 			})
 		})
@@ -188,7 +188,7 @@ func init() { //nolint:funlen,gochecknoinits
 			)
 
 			BeforeEach(func() {
-				req = boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
+				req = boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
 				action = &fakeaction.TestAction{Asynchronous: true}
 				directorActionFactory.RegisterAction("fake-action", action)
 			})

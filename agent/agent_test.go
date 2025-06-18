@@ -94,7 +94,7 @@ func init() { //nolint:funlen,gochecknoinits
 				expectedResp := boshhandler.NewValueResponse("pong")
 				actionDispatcher.DispatchResp = expectedResp
 
-				req := boshhandler.NewRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
+				req := boshhandler.NewDirectorRequest("fake-reply", "fake-action", []byte("fake-payload"), 0)
 				resp := handler.RunFunc(req)
 
 				Expect(actionDispatcher.DispatchReq).To(Equal(req))

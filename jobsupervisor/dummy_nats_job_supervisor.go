@@ -121,7 +121,7 @@ func (d *dummyNatsJobSupervisor) MonitorJobFailures(handler JobFailureHandler) e
 }
 
 func (d *dummyNatsJobSupervisor) statusHandler(req boshhandler.Request) boshhandler.Response {
-	switch req.Method {
+	switch req.GetMethod() {
 	case "set_dummy_status":
 		// Do not unmarshal message until determining its method
 		var body map[string]string

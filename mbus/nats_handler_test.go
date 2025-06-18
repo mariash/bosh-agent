@@ -99,11 +99,7 @@ func init() { //nolint:funlen,gochecknoinits
 					Data:    expectedPayload,
 				})
 
-				Expect(receivedRequest).To(Equal(boshhandler.Request{
-					ReplyTo: "reply to me!",
-					Method:  "ping",
-					Payload: expectedPayload,
-				}))
+				Expect(receivedRequest).To(Equal(boshhandler.NewDirectorRequest("reply to me!", "ping", expectedPayload, 0)))
 
 				Expect(connection.PublishCallCount()).To(Equal(1))
 				subj, message := connection.PublishArgsForCall(0)
@@ -208,17 +204,9 @@ func init() { //nolint:funlen,gochecknoinits
 				})
 
 				// Expected requests received by both handlers
-				Expect(firstHandlerReq).To(Equal(boshhandler.Request{
-					ReplyTo: "fake-reply-to",
-					Method:  "ping",
-					Payload: expectedPayload,
-				}))
+				Expect(firstHandlerReq).To(Equal(boshhandler.NewDirectorRequest("fake-reply-to", "ping", expectedPayload, 0)))
 
-				Expect(secondHandlerRequest).To(Equal(boshhandler.Request{
-					ReplyTo: "fake-reply-to",
-					Method:  "ping",
-					Payload: expectedPayload,
-				}))
+				Expect(secondHandlerRequest).To(Equal(boshhandler.NewDirectorRequest("fake-reply-to", "ping", expectedPayload, 0)))
 
 				// Bosh handler responses were sent
 				Expect(connection.PublishCallCount()).To(Equal(2))

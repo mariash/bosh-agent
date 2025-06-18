@@ -80,19 +80,19 @@ func (dispatcher concreteActionDispatcher) ResumePreviouslyDispatchedTasks() {
 }
 
 func (dispatcher concreteActionDispatcher) DispatchDirectorRequest(req boshhandler.Request) boshhandler.Response {
-	action, err := dispatcher.directorActionFactory.Create(req.Method)
+	action, err := dispatcher.directorActionFactory.Create(req.GetMethod())
 	if err != nil {
-		dispatcher.logger.Error(actionDispatcherLogTag, "Unknown action %s", req.Method)
-		return boshhandler.NewExceptionResponse(bosherr.Errorf("unknown message %s", req.Method))
+		dispatcher.logger.Error(actionDispatcherLogTag, "Unknown action %s", req.GetMethod())
+		return boshhandler.NewExceptionResponse(bosherr.Errorf("unknown message %s", req.GetMethod()))
 	}
 
-	dispatcher.logger.Info(actionDispatcherLogTag, "Received request with action %s", req.Method)
+	dispatcher.logger.Info(actionDispatcherLogTag, "Received request with action %s", req.GetMethod())
 	if action.IsLoggable() {
-		dispatcher.logger.DebugWithDetails(actionDispatcherLogTag, "Payload", req.Payload)
+		dispatcher.logger.DebugWithDetails(actionDispatcherLogTag, "Payload", req.GetPayload())
 	}
 
 	var stateValue interface{}
-	if action.IsAsynchronous(boshaction.ProtocolVersion(req.ProtocolVersion)) {
+	if action.IsAsynchronous(boshaction.ProtocolVersion(req.GetProtocolVersion())) {
 		stateValue, err = dispatcher.dispatchAsynchronousAction(action, req)
 	} else {
 		stateValue, err = dispatcher.dispatchSynchronousAction(action, req)
@@ -105,15 +105,15 @@ func (dispatcher concreteActionDispatcher) DispatchDirectorRequest(req boshhandl
 }
 
 func (dispatcher concreteActionDispatcher) DispatchAgentRequest(req boshhandler.Request) boshhandler.Response {
-	action, err := dispatcher.agentActionFactory.Create(req.Method)
+	action, err := dispatcher.agentActionFactory.Create(req.GetMethod())
 	if err != nil {
-		dispatcher.logger.Error(actionDispatcherLogTag, "Unknown action %s", req.Method)
-		return boshhandler.NewExceptionResponse(bosherr.Errorf("unknown message %s", req.Method))
+		dispatcher.logger.Error(actionDispatcherLogTag, "Unknown action %s", req.GetMethod())
+		return boshhandler.NewExceptionResponse(bosherr.Errorf("unknown message %s", req.GetMethod()))
 	}
 
-	dispatcher.logger.Info(actionDispatcherLogTag, "Received request with action %s", req.Method)
+	dispatcher.logger.Info(actionDispatcherLogTag, "Received request with action %s", req.GetMethod())
 	if action.IsLoggable() {
-		dispatcher.logger.DebugWithDetails(actionDispatcherLogTag, "Payload", req.Payload)
+		dispatcher.logger.DebugWithDetails(actionDispatcherLogTag, "Payload", req.GetPayload())
 	}
 	stateValue, err := dispatcher.dispatchAsynchronousAction(action, req)
 	if err != nil {
@@ -127,13 +127,13 @@ func (dispatcher concreteActionDispatcher) dispatchAsynchronousAction(
 	action boshaction.Action,
 	req boshhandler.Request,
 ) (boshtask.StateValue, error) {
-	dispatcher.logger.Info(actionDispatcherLogTag, "Running async action %s", req.Method)
+	dispatcher.logger.Info(actionDispatcherLogTag, "Running async action %s", req.GetMethod())
 
 	var task boshtask.Task
 	var err error
 
 	runTask := func() (interface{}, error) {
-		return dispatcher.actionRunner.Run(action, req.GetPayload(), boshaction.ProtocolVersion(req.ProtocolVersion))
+		return dispatcher.actionRunner.Run(action, req.GetPayload(), boshaction.ProtocolVersion(req.GetProtocolVersion()))
 	}
 
 	cancelTask := func(_ boshtask.Task) error { return action.Cancel() }
@@ -142,30 +142,30 @@ func (dispatcher concreteActionDispatcher) dispatchAsynchronousAction(
 	// after agent restart so that API consumers do not need to know
 	// if agent is restarted midway through the task.
 	if action.IsPersistent() {
-		dispatcher.logger.Info(actionDispatcherLogTag, "Running persistent action %s", req.Method)
+		dispatcher.logger.Info(actionDispatcherLogTag, "Running persistent action %s", req.GetMethod())
 		task, err = dispatcher.taskService.CreateTask(runTask, cancelTask, dispatcher.removeInfo)
 		if err != nil {
-			err = bosherr.WrapErrorf(err, "Create Task Failed %s", req.Method)
+			err = bosherr.WrapErrorf(err, "Create Task Failed %s", req.GetMethod())
 			dispatcher.logger.Error(actionDispatcherLogTag, err.Error())
 			return boshtask.StateValue{}, err
 		}
 
 		taskInfo := boshtask.Info{
 			TaskID:  task.ID,
-			Method:  req.Method,
+			Method:  req.GetMethod(),
 			Payload: req.GetPayload(),
 		}
 
 		err = dispatcher.taskManager.AddInfo(taskInfo)
 		if err != nil {
-			err = bosherr.WrapErrorf(err, "Action Failed %s", req.Method)
+			err = bosherr.WrapErrorf(err, "Action Failed %s", req.GetMethod())
 			dispatcher.logger.Error(actionDispatcherLogTag, err.Error())
 			return boshtask.StateValue{}, err
 		}
 	} else {
 		task, err = dispatcher.taskService.CreateTask(runTask, cancelTask, nil)
 		if err != nil {
-			err = bosherr.WrapErrorf(err, "Create Task Failed %s", req.Method)
+			err = bosherr.WrapErrorf(err, "Create Task Failed %s", req.GetMethod())
 			dispatcher.logger.Error(actionDispatcherLogTag, err.Error())
 			return boshtask.StateValue{}, err
 		}
@@ -183,11 +183,11 @@ func (dispatcher concreteActionDispatcher) dispatchSynchronousAction(
 	action boshaction.Action,
 	req boshhandler.Request,
 ) (interface{}, error) {
-	dispatcher.logger.Info(actionDispatcherLogTag, "Running sync action %s", req.Method)
+	dispatcher.logger.Info(actionDispatcherLogTag, "Running sync action %s", req.GetMethod())
 
-	value, err := dispatcher.actionRunner.Run(action, req.GetPayload(), boshaction.ProtocolVersion(req.ProtocolVersion))
+	value, err := dispatcher.actionRunner.Run(action, req.GetPayload(), boshaction.ProtocolVersion(req.GetProtocolVersion()))
 	if err != nil {
-		err = bosherr.WrapErrorf(err, "Action Failed %s", req.Method)
+		err = bosherr.WrapErrorf(err, "Action Failed %s", req.GetMethod())
 		dispatcher.logger.Error(actionDispatcherLogTag, err.Error())
 		return boshtask.StateValue{}, err
 	}
