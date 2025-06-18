@@ -111,7 +111,7 @@ func (a Agent) Run() error {
 
 func (a Agent) subscribeActionDispatcher(errCh chan error) {
 	defer a.logger.HandlePanic("Agent Message Bus Handler")
-	err := a.mbusHandler.Run(a.actionDispatcher.DispatchDirectorRequest)
+	err := a.mbusHandler.Run(a.actionDispatcher.Dispatch)
 	if err != nil {
 		err = bosherr.WrapError(err, "Message Bus Handler")
 	}
@@ -136,7 +136,7 @@ func (a Agent) generateHeartbeats(errCh chan error) {
 }
 
 func (a Agent) startAgentServer(errCh chan error) {
-	err := a.agentServer.Start(a.actionDispatcher.DispatchAgentRequest)
+	err := a.agentServer.Start(a.actionDispatcher.Dispatch)
 	if err != nil {
 		err = bosherr.WrapError(err, "Starting agent server")
 		errCh <- err

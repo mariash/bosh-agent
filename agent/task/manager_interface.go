@@ -7,6 +7,7 @@ import (
 
 type Info struct {
 	TaskID  string
+	Type    string
 	Method  string
 	Payload []byte
 }

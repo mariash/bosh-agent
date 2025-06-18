@@ -12,17 +12,19 @@ import (
 	boshscript "github.com/cloudfoundry/bosh-agent/v2/agent/script"
 	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
 	"github.com/cloudfoundry/bosh-agent/v2/agent/utils"
+	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshjobsuper "github.com/cloudfoundry/bosh-agent/v2/jobsupervisor"
 	boshnotif "github.com/cloudfoundry/bosh-agent/v2/notification"
 	boshplatform "github.com/cloudfoundry/bosh-agent/v2/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/v2/settings"
 )
 
-type directorActionFactory struct {
-	availableActions map[string]Action
+type concreteFactory struct {
+	directorActions map[string]Action
+	agentActions    map[string]Action
 }
 
-func NewDirectorActionFactory(
+func NewFactory(
 	settingsService boshsettings.Service,
 	platform boshplatform.Platform,
 	// TODO(ctz, ja): refactor the usage of blobstore as its a duplicate to the
@@ -36,14 +38,15 @@ func NewDirectorActionFactory(
 	specService boshas.V1Service,
 	jobScriptProvider boshscript.JobScriptProvider,
 	logger boshlog.Logger,
-	blobstoreDelegator blobdelegator.BlobstoreDelegator) (factory Factory) {
+	blobstoreDelegator blobdelegator.BlobstoreDelegator,
+	directorClient boshagentserver.DirectorClient) (factory Factory) {
 	dirProvider := platform.GetDirProvider()
 	vitalsService := platform.GetVitalsService()
 	certManager := platform.GetCertManager()
 	logsTarProvider := platform.GetLogsTarProvider()
 
-	return directorActionFactory{
-		availableActions: map[string]Action{
+	return concreteFactory{
+		directorActions: map[string]Action{
 			// API
 			"ping": NewPing(),
 			"info": NewInfo(),
@@ -93,11 +96,24 @@ func NewDirectorActionFactory(
 			"sync_dns":                 NewSyncDNS(blobstoreDelegator, settingsService, platform, logger),
 			"sync_dns_with_signed_url": NewSyncDNSWithSignedURL(settingsService, platform, logger, blobstoreDelegator),
 		},
+		agentActions: map[string]Action{
+			"provide_dynamic_disk": NewProvideDynamicDiskAction(directorClient, specService, settingsService, platform),
+		},
 	}
 }
 
-func (f directorActionFactory) Create(method string) (Action, error) {
-	action, found := f.availableActions[method]
+func (f concreteFactory) Create(actionType string, method string) (action Action, err error) {
+	var found bool
+
+	switch actionType {
+	case "director":
+		action, found = f.directorActions[method]
+	case "agent":
+		action, found = f.agentActions[method]
+	default:
+		return nil, bosherr.Errorf("Unknown action type %s", actionType)
+	}
+
 	if !found {
 		return nil, bosherr.Errorf("Could not create action with method %s", method)
 	}

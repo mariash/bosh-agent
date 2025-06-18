@@ -24,6 +24,9 @@ type ProvideDiskResponse struct {
 	DiskHint string `json:"disk_hint"`
 }
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . DirectorClient
 type DirectorClient interface {
 	ProvideDisk(ProvideDiskRequest) (ProvideDiskResponse, error)
 }

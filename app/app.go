@@ -207,7 +207,9 @@ func (app *app) Setup(opts Options) error {
 		app.logger,
 	)
 
-	directorActionFactory := boshaction.NewDirectorActionFactory(
+	directorClient := boshagentserver.NewDirectorClient(mbusHandler)
+
+	actionFactory := boshaction.NewFactory(
 		settingsService,
 		app.platform,
 		sensitiveBlobManager,
@@ -220,10 +222,8 @@ func (app *app) Setup(opts Options) error {
 		jobScriptProvider,
 		app.logger,
 		blobstoreDelegator,
+		directorClient,
 	)
-
-	directorClient := boshagentserver.NewDirectorClient(mbusHandler)
-	agentActionFactory := boshaction.NewAgentActionFactory(directorClient, specService, settingsService.GetSettings(), app.platform)
 
 	actionRunner := boshaction.NewRunner()
 
@@ -231,8 +231,7 @@ func (app *app) Setup(opts Options) error {
 		app.logger,
 		taskService,
 		taskManager,
-		directorActionFactory,
-		agentActionFactory,
+		actionFactory,
 		actionRunner,
 	)
 

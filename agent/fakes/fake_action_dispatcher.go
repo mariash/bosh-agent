@@ -14,12 +14,7 @@ func (dispatcher *FakeActionDispatcher) ResumePreviouslyDispatchedTasks() {
 	dispatcher.ResumedPreviouslyDispatchedTasks = true
 }
 
-func (dispatcher *FakeActionDispatcher) DispatchDirectorRequest(req boshhandler.Request) boshhandler.Response {
-	dispatcher.DispatchReq = req
-	return dispatcher.DispatchResp
-}
-
-func (dispatcher *FakeActionDispatcher) DispatchAgentRequest(req boshhandler.Request) boshhandler.Response {
+func (dispatcher *FakeActionDispatcher) Dispatch(req boshhandler.Request) boshhandler.Response {
 	dispatcher.DispatchReq = req
 	return dispatcher.DispatchResp
 }

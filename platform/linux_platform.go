@@ -726,18 +726,18 @@ func (p linux) SetupDynamicDisk(diskSetting boshsettings.DiskSettings) (string, 
 		return "", bosherr.WrapError(err, "Getting real device path")
 	}
 
-	persistentDiskFS := diskSetting.FileSystemType
-	switch persistentDiskFS {
+	diskFS := diskSetting.FileSystemType
+	switch diskFS {
 	case boshdisk.FileSystemExt4, boshdisk.FileSystemXFS:
 	case boshdisk.FileSystemDefault:
-		persistentDiskFS = boshdisk.FileSystemExt4
+		diskFS = boshdisk.FileSystemExt4
 	case boshdisk.FileSystemSwap:
 		fallthrough
 	default:
 		return "", bosherr.Error(fmt.Sprintf(`The filesystem type "%s" is not supported`, diskSetting.FileSystemType))
 	}
 
-	err = p.diskManager.GetFormatter().Format(devicePath, persistentDiskFS)
+	err = p.diskManager.GetFormatter().Format(devicePath, diskFS)
 	if err != nil {
 		return "", bosherr.WrapError(err, fmt.Sprintf("Formatting partition with %s", diskSetting.FileSystemType))
 	}

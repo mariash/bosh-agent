@@ -1,5 +1,5 @@
 package action
 
 type Factory interface {
-	Create(method string) (action Action, err error)
+	Create(actionType string, method string) (action Action, err error)
 }

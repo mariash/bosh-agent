@@ -12,22 +12,22 @@ import (
 )
 
 type ProvideDynamicDiskAction struct {
-	directorClient boshagentserver.DirectorClient
-	specService    boshas.V1Service
-	settings       boshsettings.Settings
-	platform       boshplatform.Platform
+	directorClient  boshagentserver.DirectorClient
+	specService     boshas.V1Service
+	settingsService boshsettings.Service
+	platform        boshplatform.Platform
 }
 
 type ProvideDynamicDiskTaskResult struct {
 	DevicePath string `json:"device_path"`
 }
 
-func NewProvideDynamicDiskAction(directorClient agentserver.DirectorClient, specService boshas.V1Service, settings boshsettings.Settings, platform boshplatform.Platform) ProvideDynamicDiskAction {
+func NewProvideDynamicDiskAction(directorClient agentserver.DirectorClient, specService boshas.V1Service, settingsService boshsettings.Service, platform boshplatform.Platform) ProvideDynamicDiskAction {
 	return ProvideDynamicDiskAction{
-		directorClient: directorClient,
-		specService:    specService,
-		settings:       settings,
-		platform:       platform,
+		directorClient:  directorClient,
+		specService:     specService,
+		settingsService: settingsService,
+		platform:        platform,
 	}
 }
 
@@ -47,7 +47,7 @@ func (a ProvideDynamicDiskAction) Run(diskName string, diskPoolName string, disk
 		return "", bosherr.WrapError(err, "Sending provide disk request to director")
 	}
 
-	diskSettings := a.settings.DynamicDiskSettings(resp.DiskName, resp.DiskHint)
+	diskSettings := a.settingsService.GetSettings().DynamicDiskSettings(resp.DiskName, resp.DiskHint)
 	devicePath, err := a.platform.SetupDynamicDisk(diskSettings)
 	if err != nil {
 		return "", bosherr.WrapError(err, "Setting up dynamic disk")

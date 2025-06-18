@@ -9,6 +9,7 @@ import (
 type ProtocolVersion int
 
 type Request interface {
+	GetType() string
 	GetReplyTo() string
 	GetMethod() string
 	GetPayload() []byte
@@ -43,6 +44,10 @@ type directorRequest struct {
 	ProtocolVersion ProtocolVersion `json:"protocol"`
 }
 
+func (r directorRequest) GetType() string {
+	return "director"
+}
+
 func (r directorRequest) GetReplyTo() string {
 	return r.ReplyTo
 }
@@ -64,6 +69,10 @@ func NewAgentRequest(method string, payload []byte) agentRequest {
 		Method:  method,
 		Payload: payload,
 	}
+}
+
+func (r agentRequest) GetType() string {
+	return "agent"
 }
 
 type agentRequest struct {

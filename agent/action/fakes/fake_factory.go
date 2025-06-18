@@ -19,7 +19,7 @@ func NewFakeFactory() *FakeFactory {
 	}
 }
 
-func (f *FakeFactory) Create(method string) (boshaction.Action, error) {
+func (f *FakeFactory) Create(actionType string, method string) (boshaction.Action, error) {
 	if err := f.registeredActionErrs[method]; err != nil {
 		return nil, err
 	}
