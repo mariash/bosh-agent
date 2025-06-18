@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	boshaction "github.com/cloudfoundry/bosh-agent/v2/agent/action"
+	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
 )
 
 type FakeFactory struct {
@@ -19,7 +20,7 @@ func NewFakeFactory() *FakeFactory {
 	}
 }
 
-func (f *FakeFactory) Create(actionType string, method string) (boshaction.Action, error) {
+func (f *FakeFactory) Create(source boshhandler.RequestSource, method string) (boshaction.Action, error) {
 	if err := f.registeredActionErrs[method]; err != nil {
 		return nil, err
 	}

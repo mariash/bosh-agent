@@ -312,6 +312,32 @@ func init() { //nolint:funlen,gochecknoinits
 					Expect(string(actionRunner.RunPayload)).To(Equal("fake-payload"))
 				})
 
+				Context("when request is a director request", func() {
+					It("returns run value to the task in director task response", func() {
+						actionRunner.RunValue = "fake-value"
+						resp := dispatcher.Dispatch(req)
+
+						respJSON, err := json.Marshal(resp)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(respJSON).To(MatchJSON(`{"value":{"agent_task_id":"fake-generated-task-id","state":"running"}}`))
+					})
+				})
+
+				Context("when request is an agent request", func() {
+					BeforeEach(func() {
+						req = boshhandler.NewAgentRequest("fake-action", []byte("fake-payload"))
+					})
+
+					It("returns run value to the task in agent task response", func() {
+						actionRunner.RunValue = "fake-value"
+						resp := dispatcher.Dispatch(req)
+
+						respJSON, err := json.Marshal(resp)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(respJSON).To(MatchJSON(`{"task_id":"fake-generated-task-id","state":"running"}`))
+					})
+				})
+
 				It("returns run error to the task", func() {
 					actionRunner.RunErr = errors.New("fake-run-error")
 					dispatcher.Dispatch(req)
@@ -331,9 +357,9 @@ func init() { //nolint:funlen,gochecknoinits
 					dispatcher.Dispatch(req)               //nolint:errcheck
 					taskInfos, _ := taskManager.GetInfos() //nolint:errcheck
 					Expect(taskInfos).To(Equal([]boshtask.Info{
-						boshtask.Info{
+						{
 							TaskID:  "fake-generated-task-id",
-							Type:    "director",
+							Source:  "director",
 							Method:  "fake-action",
 							Payload: []byte("fake-payload"),
 						},
@@ -366,6 +392,7 @@ func init() { //nolint:funlen,gochecknoinits
 			BeforeEach(func() {
 				err := taskManager.AddInfo(boshtask.Info{
 					TaskID:  "fake-task-id-1",
+					Source:  "director",
 					Method:  "fake-action-1",
 					Payload: []byte("fake-task-payload-1"),
 				})
@@ -373,6 +400,7 @@ func init() { //nolint:funlen,gochecknoinits
 
 				err = taskManager.AddInfo(boshtask.Info{
 					TaskID:  "fake-task-id-2",
+					Source:  "director",
 					Method:  "fake-action-2",
 					Payload: []byte("fake-task-payload-2"),
 				})
@@ -463,8 +491,9 @@ func init() { //nolint:funlen,gochecknoinits
 					taskInfos, err := taskManager.GetInfos()
 					Expect(err).ToNot(HaveOccurred())
 					Expect(taskInfos).To(Equal([]boshtask.Info{
-						boshtask.Info{
+						{
 							TaskID:  "fake-task-id-2",
+							Source:  "director",
 							Method:  "fake-action-2",
 							Payload: []byte("fake-task-payload-2"),
 						},

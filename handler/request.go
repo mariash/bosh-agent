@@ -3,17 +3,32 @@ package handler
 import (
 	"encoding/json"
 
+	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 type ProtocolVersion int
+type RequestSource string
+
+const (
+	RequestSourceDirector RequestSource = "director"
+	RequestSourceAgent    RequestSource = "agent"
+)
 
 type Request interface {
-	GetType() string
+	Source() RequestSource
 	GetReplyTo() string
 	GetMethod() string
 	GetPayload() []byte
 	GetProtocolVersion() ProtocolVersion
+	TaskStateResponse(taskID string, state boshtask.State) Response
+}
+
+type directorRequest struct {
+	ReplyTo         string `json:"reply_to"`
+	Method          string
+	Payload         []byte
+	ProtocolVersion ProtocolVersion `json:"protocol"`
 }
 
 func NewDirectorRequest(replyTo, method string, payload []byte, protocolVersion ProtocolVersion) directorRequest {
@@ -37,15 +52,8 @@ func NewDirectorRequestFromJSON(rawJSON []byte) (directorRequest, error) {
 	return request, nil
 }
 
-type directorRequest struct {
-	ReplyTo         string `json:"reply_to"`
-	Method          string
-	Payload         []byte
-	ProtocolVersion ProtocolVersion `json:"protocol"`
-}
-
-func (r directorRequest) GetType() string {
-	return "director"
+func (r directorRequest) Source() RequestSource {
+	return RequestSourceDirector
 }
 
 func (r directorRequest) GetReplyTo() string {
@@ -60,6 +68,13 @@ func (r directorRequest) GetPayload() []byte {
 	return r.Payload
 }
 
+func (r directorRequest) TaskStateResponse(taskID string, state boshtask.State) Response {
+	return NewValueResponse(boshtask.StateValue{
+		AgentTaskID: taskID,
+		State:       state,
+	})
+}
+
 func (r directorRequest) GetProtocolVersion() ProtocolVersion {
 	return r.ProtocolVersion
 }
@@ -71,8 +86,8 @@ func NewAgentRequest(method string, payload []byte) agentRequest {
 	}
 }
 
-func (r agentRequest) GetType() string {
-	return "agent"
+func (r agentRequest) Source() RequestSource {
+	return RequestSourceAgent
 }
 
 type agentRequest struct {
@@ -94,4 +109,8 @@ func (r agentRequest) GetPayload() []byte {
 
 func (r agentRequest) GetProtocolVersion() ProtocolVersion {
 	return 0
+}
+
+func (r agentRequest) TaskStateResponse(taskID string, state boshtask.State) Response {
+	return NewTaskResponse(taskID, state)
 }

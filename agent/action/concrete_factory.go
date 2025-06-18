@@ -13,6 +13,7 @@ import (
 	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
 	"github.com/cloudfoundry/bosh-agent/v2/agent/utils"
 	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
+	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
 	boshjobsuper "github.com/cloudfoundry/bosh-agent/v2/jobsupervisor"
 	boshnotif "github.com/cloudfoundry/bosh-agent/v2/notification"
 	boshplatform "github.com/cloudfoundry/bosh-agent/v2/platform"
@@ -102,16 +103,15 @@ func NewFactory(
 	}
 }
 
-func (f concreteFactory) Create(actionType string, method string) (action Action, err error) {
+func (f concreteFactory) Create(requestSource boshhandler.RequestSource, method string) (action Action, err error) {
 	var found bool
-
-	switch actionType {
-	case "director":
+	switch requestSource {
+	case boshhandler.RequestSourceDirector:
 		action, found = f.directorActions[method]
-	case "agent":
+	case boshhandler.RequestSourceAgent:
 		action, found = f.agentActions[method]
 	default:
-		return nil, bosherr.Errorf("Unknown action type %s", actionType)
+		return nil, bosherr.Errorf("Unknown action type %s", requestSource)
 	}
 
 	if !found {

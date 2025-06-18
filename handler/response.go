@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/cloudfoundry/bosh-agent/v2/agent/task"
+	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
@@ -50,11 +50,11 @@ func (r exceptionResponse) Shorten() Response {
 }
 
 type taskResponse struct {
-	TaskID string     `json:"task_id"`
-	State  task.State `json:"state"`
+	TaskID string         `json:"task_id"`
+	State  boshtask.State `json:"state"`
 }
 
-func NewTaskResponse(taskID string, state task.State) Response {
+func NewTaskResponse(taskID string, state boshtask.State) Response {
 	return taskResponse{TaskID: taskID, State: state}
 }
 

@@ -52,7 +52,7 @@ func (dispatcher concreteActionDispatcher) ResumePreviouslyDispatchedTasks() {
 	}
 
 	for _, taskInfo := range taskInfos {
-		action, err := dispatcher.actionFactory.Create(taskInfo.Type, taskInfo.Method)
+		action, err := dispatcher.actionFactory.Create(boshhandler.RequestSource(taskInfo.Source), taskInfo.Method)
 		if err != nil {
 			dispatcher.logger.Error(actionDispatcherLogTag, "Unknown action %s", taskInfo.Method)
 			if removeErr := dispatcher.taskManager.RemoveInfo(taskInfo.TaskID); removeErr != nil {
@@ -76,7 +76,7 @@ func (dispatcher concreteActionDispatcher) ResumePreviouslyDispatchedTasks() {
 }
 
 func (dispatcher concreteActionDispatcher) Dispatch(req boshhandler.Request) boshhandler.Response {
-	action, err := dispatcher.actionFactory.Create(req.GetType(), req.GetMethod())
+	action, err := dispatcher.actionFactory.Create(req.Source(), req.GetMethod())
 	if err != nil {
 		dispatcher.logger.Error(actionDispatcherLogTag, "Unknown action %s", req.GetMethod())
 		return boshhandler.NewExceptionResponse(bosherr.Errorf("unknown message %s", req.GetMethod()))
@@ -123,7 +123,7 @@ func (dispatcher concreteActionDispatcher) dispatchAsynchronousAction(
 
 		taskInfo := boshtask.Info{
 			TaskID:  task.ID,
-			Type:    req.GetType(),
+			Source:  boshtask.RequestSource(req.Source()),
 			Method:  req.GetMethod(),
 			Payload: req.GetPayload(),
 		}
@@ -145,14 +145,7 @@ func (dispatcher concreteActionDispatcher) dispatchAsynchronousAction(
 
 	dispatcher.taskService.StartTask(task)
 
-	if req.GetType() == "director" {
-		return boshhandler.NewValueResponse(boshtask.StateValue{
-			AgentTaskID: task.ID,
-			State:       task.State,
-		})
-	}
-
-	return boshhandler.NewTaskResponse(task.ID, task.State)
+	return req.TaskStateResponse(task.ID, task.State)
 }
 
 func (dispatcher concreteActionDispatcher) dispatchSynchronousAction(

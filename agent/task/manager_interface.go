@@ -5,9 +5,11 @@ import (
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
+type RequestSource string
+
 type Info struct {
 	TaskID  string
-	Type    string
+	Source  RequestSource
 	Method  string
 	Payload []byte
 }
