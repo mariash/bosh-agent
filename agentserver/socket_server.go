@@ -11,7 +11,14 @@ import (
 	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
 	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
+
+const socketServerLogTag = "SocketServer"
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
 
 type TaskStatusResponse struct {
 	State  string      `json:"state"`
@@ -20,13 +27,15 @@ type TaskStatusResponse struct {
 }
 
 type socketServer struct {
+	logger      boshlog.Logger
 	socketPath  string
 	taskService boshtask.Service
 	listener    net.Listener
 }
 
-func NewSocketServer(socketPath string, taskService boshtask.Service) AgentServer {
+func NewSocketServer(logger boshlog.Logger, socketPath string, taskService boshtask.Service) AgentServer {
 	return &socketServer{
+		logger:      logger,
 		socketPath:  socketPath,
 		taskService: taskService,
 	}
@@ -61,9 +70,7 @@ func (s *socketServer) Start(handlerFunc boshhandler.Func) error {
 		Handler: mux,
 	}
 
-	server.Serve(s.listener)
-
-	return nil
+	return server.Serve(s.listener)
 }
 
 func (s *socketServer) Stop() error {
@@ -119,21 +126,15 @@ func (s *socketServer) respond(w http.ResponseWriter, statusCode int, resp inter
 	respBytes, err := json.Marshal(resp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		resp := boshhandler.NewExceptionResponse(err)
-		respBytes, err := json.Marshal(resp)
-		if err == nil {
-			w.Write(respBytes)
-		}
+		s.logger.Error(socketServerLogTag, "Failed marshalling response: %s", err.Error())
+		fmt.Fprintf(w, "Failed marshalling response: %s", err.Error())
 		return
 	}
 
 	w.WriteHeader(statusCode)
 	_, err = w.Write(respBytes)
 	if err != nil {
-		resp := boshhandler.NewExceptionResponse(err)
-		respBytes, err := json.Marshal(resp)
-		if err == nil {
-			w.Write(respBytes)
-		}
+		s.logger.Error(socketServerLogTag, "Failed sending response: %s", err.Error())
+		fmt.Fprintf(w, "Failed sending response: %s", err.Error())
 	}
 }

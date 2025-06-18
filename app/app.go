@@ -242,7 +242,7 @@ func (app *app) Setup(opts Options) error {
 		app.dirProvider,
 	)
 
-	agentServer := boshagentserver.NewSocketServer("/var/vcap/bosh/agent.sock", taskService)
+	agentServer := boshagentserver.NewSocketServer(app.logger, "/var/vcap/bosh/agent.sock", taskService)
 
 	app.agent = boshagent.New(
 		app.logger,

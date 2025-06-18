@@ -130,10 +130,8 @@ func (a Agent) generateHeartbeats(errCh chan error) {
 	tickChan := time.Tick(a.heartbeatInterval) //nolint:staticcheck
 
 	for { //nolint:staticcheck
-		select {
-		case <-tickChan:
-			a.sendAndRecordHeartbeat(errCh, true)
-		}
+		<-tickChan
+		a.sendAndRecordHeartbeat(errCh, true)
 	}
 }
 

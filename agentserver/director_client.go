@@ -1,8 +1,6 @@
 package agentserver
 
 import (
-	"fmt"
-
 	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
 	boshmbus "github.com/cloudfoundry/bosh-agent/v2/mbus"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
@@ -12,7 +10,7 @@ const ProvideDiskTopic = "disk.provide"
 
 type ProvideDiskRequest struct {
 	DiskName     string `json:"disk_name"`
-	DiskSizeInMb uint    `json:"disk_size"`
+	DiskSizeInMb uint   `json:"disk_size"`
 	DiskPoolName string `json:"disk_pool_name"`
 
 	Deployment string `json:"deployment"`
@@ -47,7 +45,7 @@ func (c directorClient) ProvideDisk(req ProvideDiskRequest) (ProvideDiskResponse
 		return ProvideDiskResponse{}, bosherr.WrapError(err, "Sending provide disk request")
 	}
 	if resp.Error != "" {
-		return ProvideDiskResponse{}, bosherr.WrapError(fmt.Errorf(resp.Error), "Provide disk request failed")
+		return ProvideDiskResponse{}, bosherr.Errorf("Provide disk request failed: %s", resp.Error)
 	}
 	return resp, nil
 }
