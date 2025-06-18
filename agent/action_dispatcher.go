@@ -87,23 +87,17 @@ func (dispatcher concreteActionDispatcher) Dispatch(req boshhandler.Request) bos
 		dispatcher.logger.DebugWithDetails(actionDispatcherLogTag, "Payload", req.GetPayload())
 	}
 
-	var stateValue interface{}
 	if action.IsAsynchronous(boshaction.ProtocolVersion(req.GetProtocolVersion())) {
-		stateValue, err = dispatcher.dispatchAsynchronousAction(action, req)
-	} else {
-		stateValue, err = dispatcher.dispatchSynchronousAction(action, req)
-	}
-	if err != nil {
-		return boshhandler.NewExceptionResponse(err)
+		return dispatcher.dispatchAsynchronousAction(action, req)
 	}
 
-	return boshhandler.NewValueResponse(stateValue)
+	return dispatcher.dispatchSynchronousAction(action, req)
 }
 
 func (dispatcher concreteActionDispatcher) dispatchAsynchronousAction(
 	action boshaction.Action,
 	req boshhandler.Request,
-) (boshtask.StateValue, error) {
+) boshhandler.Response {
 	dispatcher.logger.Info(actionDispatcherLogTag, "Running async action %s", req.GetMethod())
 
 	var task boshtask.Task
@@ -124,7 +118,7 @@ func (dispatcher concreteActionDispatcher) dispatchAsynchronousAction(
 		if err != nil {
 			err = bosherr.WrapErrorf(err, "Create Task Failed %s", req.GetMethod())
 			dispatcher.logger.Error(actionDispatcherLogTag, err.Error())
-			return boshtask.StateValue{}, err
+			return boshhandler.NewExceptionResponse(err)
 		}
 
 		taskInfo := boshtask.Info{
@@ -138,39 +132,43 @@ func (dispatcher concreteActionDispatcher) dispatchAsynchronousAction(
 		if err != nil {
 			err = bosherr.WrapErrorf(err, "Action Failed %s", req.GetMethod())
 			dispatcher.logger.Error(actionDispatcherLogTag, err.Error())
-			return boshtask.StateValue{}, err
+			return boshhandler.NewExceptionResponse(err)
 		}
 	} else {
 		task, err = dispatcher.taskService.CreateTask(runTask, cancelTask, nil)
 		if err != nil {
 			err = bosherr.WrapErrorf(err, "Create Task Failed %s", req.GetMethod())
 			dispatcher.logger.Error(actionDispatcherLogTag, err.Error())
-			return boshtask.StateValue{}, err
+			return boshhandler.NewExceptionResponse(err)
 		}
 	}
 
 	dispatcher.taskService.StartTask(task)
 
-	return boshtask.StateValue{
-		AgentTaskID: task.ID,
-		State:       task.State,
-	}, nil
+	if req.GetType() == "director" {
+		return boshhandler.NewValueResponse(boshtask.StateValue{
+			AgentTaskID: task.ID,
+			State:       task.State,
+		})
+	}
+
+	return boshhandler.NewTaskResponse(task.ID, task.State)
 }
 
 func (dispatcher concreteActionDispatcher) dispatchSynchronousAction(
 	action boshaction.Action,
 	req boshhandler.Request,
-) (interface{}, error) {
+) boshhandler.Response {
 	dispatcher.logger.Info(actionDispatcherLogTag, "Running sync action %s", req.GetMethod())
 
 	value, err := dispatcher.actionRunner.Run(action, req.GetPayload(), boshaction.ProtocolVersion(req.GetProtocolVersion()))
 	if err != nil {
 		err = bosherr.WrapErrorf(err, "Action Failed %s", req.GetMethod())
 		dispatcher.logger.Error(actionDispatcherLogTag, err.Error())
-		return boshtask.StateValue{}, err
+		return boshhandler.NewExceptionResponse(err)
 	}
 
-	return value, nil
+	return boshhandler.NewValueResponse(value)
 }
 
 func (dispatcher concreteActionDispatcher) removeInfo(task boshtask.Task) {

@@ -274,4 +274,11 @@ var _ = Describe("directorActionFactory", func() {
 
 		Expect(action).To(Equal(boshaction.NewUploadBlobAction(blobManager)))
 	})
+
+	It("provide_dynamic_disk", func() {
+		action, err := factory.Create("agent", "provide_dynamic_disk")
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(action).To(Equal(boshaction.NewProvideDynamicDiskAction(directorClient, specService, settingsService, platform)))
+	})
 })
