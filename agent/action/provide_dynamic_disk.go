@@ -22,7 +22,11 @@ type ProvideDynamicDiskTaskResult struct {
 	DevicePath string `json:"device_path"`
 }
 
-func NewProvideDynamicDiskAction(directorClient agentserver.DirectorClient, specService boshas.V1Service, settingsService boshsettings.Service, platform boshplatform.Platform) ProvideDynamicDiskAction {
+func NewProvideDynamicDiskAction(
+	directorClient agentserver.DirectorClient,
+	specService boshas.V1Service,
+	settingsService boshsettings.Service,
+	platform boshplatform.Platform) ProvideDynamicDiskAction {
 	return ProvideDynamicDiskAction{
 		directorClient:  directorClient,
 		specService:     specService,
