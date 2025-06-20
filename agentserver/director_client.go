@@ -8,9 +8,9 @@ import (
 
 const ProvideDiskTopic = "disk.provide"
 
-type ProvideDiskRequest struct {
+type ProvideDiskDirectorRequest struct {
 	DiskName     string `json:"disk_name"`
-	DiskSizeInMb uint   `json:"disk_size"`
+	DiskSize     uint   `json:"disk_size"`
 	DiskPoolName string `json:"disk_pool_name"`
 
 	Deployment string `json:"deployment"`
@@ -18,7 +18,7 @@ type ProvideDiskRequest struct {
 	Metadata map[string]interface{} `json:"metadata"`
 }
 
-type ProvideDiskResponse struct {
+type ProvideDiskDirectorResponse struct {
 	Error    string `json:"error"`
 	DiskName string `json:"disk_name"`
 	DiskHint string `json:"disk_hint"`
@@ -28,7 +28,7 @@ type ProvideDiskResponse struct {
 
 //counterfeiter:generate . DirectorClient
 type DirectorClient interface {
-	ProvideDisk(ProvideDiskRequest) (ProvideDiskResponse, error)
+	ProvideDisk(ProvideDiskDirectorRequest) (ProvideDiskDirectorResponse, error)
 }
 
 type directorClient struct {
@@ -41,14 +41,14 @@ func NewDirectorClient(mbusHandler boshmbus.Handler) DirectorClient {
 	}
 }
 
-func (c directorClient) ProvideDisk(req ProvideDiskRequest) (ProvideDiskResponse, error) {
-	var resp ProvideDiskResponse
+func (c directorClient) ProvideDisk(req ProvideDiskDirectorRequest) (ProvideDiskDirectorResponse, error) {
+	var resp ProvideDiskDirectorResponse
 	err := c.mbusHandler.Request(boshhandler.Director, ProvideDiskTopic, req, &resp)
 	if err != nil {
-		return ProvideDiskResponse{}, bosherr.WrapError(err, "Sending provide disk request")
+		return ProvideDiskDirectorResponse{}, bosherr.WrapError(err, "Sending provide disk request")
 	}
 	if resp.Error != "" {
-		return ProvideDiskResponse{}, bosherr.Errorf("Provide disk request failed: %s", resp.Error)
+		return ProvideDiskDirectorResponse{}, bosherr.Errorf("Provide disk request failed: %s", resp.Error)
 	}
 	return resp, nil
 }

@@ -35,15 +35,15 @@ func NewProvideDynamicDiskAction(
 	}
 }
 
-func (a ProvideDynamicDiskAction) Run(diskName string, diskPoolName string, diskSizeInMb uint) (interface{}, error) {
+func (a ProvideDynamicDiskAction) Run(diskName string, diskPoolName string, diskSize uint) (interface{}, error) {
 	spec, err := a.specService.Get()
 	if err != nil {
 		return "", bosherr.WrapError(err, "Getting job spec")
 	}
 
-	resp, err := a.directorClient.ProvideDisk(boshagentserver.ProvideDiskRequest{
+	resp, err := a.directorClient.ProvideDisk(boshagentserver.ProvideDiskDirectorRequest{
 		Deployment:   spec.Deployment,
-		DiskSizeInMb: diskSizeInMb,
+		DiskSize:     diskSize,
 		DiskName:     diskName,
 		DiskPoolName: diskPoolName,
 	})

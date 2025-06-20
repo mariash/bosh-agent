@@ -3,7 +3,6 @@ package agentserver
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -20,10 +19,34 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+type ProvideDiskAgentRequest struct {
+	DiskName     string `json:"disk_name"`
+	DiskSize     uint   `json:"disk_size"`
+	DiskPoolName string `json:"disk_pool_name"`
+}
+
+func (r ProvideDiskAgentRequest) Validate() error {
+	if r.DiskName == "" {
+		return bosherr.Error("missing disk_name")
+	}
+	if r.DiskPoolName == "" {
+		return bosherr.Error("missing disk_pool_name")
+	}
+	if r.DiskSize == 0 {
+		return bosherr.Error("missing disk_size")
+	}
+
+	return nil
+}
+
 type TaskStatusResponse struct {
 	State  string      `json:"state"`
 	Result interface{} `json:"result,omitempty"`
 	Error  string      `json:"error,omitempty"`
+}
+
+type payloadForHandler struct {
+	Arguments []interface{} `json:"arguments"`
 }
 
 type socketServer struct {
@@ -83,14 +106,26 @@ func (s *socketServer) Stop() error {
 }
 
 func (s *socketServer) provideDisk(w http.ResponseWriter, r *http.Request, handlerFunc boshhandler.Func) {
-	body, err := io.ReadAll(r.Body)
+	var provideDiskRequest ProvideDiskAgentRequest
+	err := s.parseRequest(r, &provideDiskRequest)
 	if err != nil {
 		s.respond(w, http.StatusBadRequest, boshhandler.NewExceptionResponse(err))
 		return
 	}
-	defer r.Body.Close()
+	err = provideDiskRequest.Validate()
+	if err != nil {
+		s.respond(w, http.StatusBadRequest, boshhandler.NewExceptionResponse(err))
+		return
+	}
 
-	resp := handlerFunc(boshhandler.NewAgentRequest("provide_dynamic_disk", body))
+	handlerRequest := payloadForHandler{Arguments: []interface{}{provideDiskRequest.DiskName, provideDiskRequest.DiskPoolName, provideDiskRequest.DiskSize}}
+	payload, err := json.Marshal(handlerRequest)
+	if err != nil {
+		s.respond(w, http.StatusInternalServerError, boshhandler.NewExceptionResponse(err))
+		return
+	}
+
+	resp := handlerFunc(boshhandler.NewAgentRequest("provide_dynamic_disk", payload))
 	s.respond(w, http.StatusOK, resp)
 }
 
@@ -134,4 +169,13 @@ func (s *socketServer) respond(w http.ResponseWriter, statusCode int, resp inter
 		s.logger.Error(socketServerLogTag, "Failed sending response: %s", err.Error())
 		fmt.Fprintf(w, "Failed sending response: %s", err.Error())
 	}
+}
+
+func (s *socketServer) parseRequest(r *http.Request, object interface{}) error {
+	err := json.NewDecoder(r.Body).Decode(&object)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return nil
 }

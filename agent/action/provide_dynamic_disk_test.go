@@ -42,7 +42,7 @@ var _ = Describe("ProvideDynamicDisk", func() {
 
 		provideDynamicDiskAction = action.NewProvideDynamicDiskAction(directorClient, specService, settingsService, platform)
 
-		directorClient.ProvideDiskReturns(agentserver.ProvideDiskResponse{DiskName: "some-disk-name", DiskHint: "some-disk-hint"}, nil)
+		directorClient.ProvideDiskReturns(agentserver.ProvideDiskDirectorResponse{DiskName: "some-disk-name", DiskHint: "some-disk-hint"}, nil)
 		platform.SetupDynamicDiskReturns("/some/device/path", nil)
 	})
 
@@ -62,7 +62,7 @@ var _ = Describe("ProvideDynamicDisk", func() {
 
 	Context("when director provide disk call fails", func() {
 		BeforeEach(func() {
-			directorClient.ProvideDiskReturns(agentserver.ProvideDiskResponse{}, errors.New("some-provide-disk-error"))
+			directorClient.ProvideDiskReturns(agentserver.ProvideDiskDirectorResponse{}, errors.New("some-provide-disk-error"))
 		})
 
 		It("returns an error", func() {

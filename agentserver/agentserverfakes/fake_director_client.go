@@ -8,28 +8,28 @@ import (
 )
 
 type FakeDirectorClient struct {
-	ProvideDiskStub        func(agentserver.ProvideDiskRequest) (agentserver.ProvideDiskResponse, error)
+	ProvideDiskStub        func(agentserver.ProvideDiskDirectorRequest) (agentserver.ProvideDiskDirectorResponse, error)
 	provideDiskMutex       sync.RWMutex
 	provideDiskArgsForCall []struct {
-		arg1 agentserver.ProvideDiskRequest
+		arg1 agentserver.ProvideDiskDirectorRequest
 	}
 	provideDiskReturns struct {
-		result1 agentserver.ProvideDiskResponse
+		result1 agentserver.ProvideDiskDirectorResponse
 		result2 error
 	}
 	provideDiskReturnsOnCall map[int]struct {
-		result1 agentserver.ProvideDiskResponse
+		result1 agentserver.ProvideDiskDirectorResponse
 		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDirectorClient) ProvideDisk(arg1 agentserver.ProvideDiskRequest) (agentserver.ProvideDiskResponse, error) {
+func (fake *FakeDirectorClient) ProvideDisk(arg1 agentserver.ProvideDiskDirectorRequest) (agentserver.ProvideDiskDirectorResponse, error) {
 	fake.provideDiskMutex.Lock()
 	ret, specificReturn := fake.provideDiskReturnsOnCall[len(fake.provideDiskArgsForCall)]
 	fake.provideDiskArgsForCall = append(fake.provideDiskArgsForCall, struct {
-		arg1 agentserver.ProvideDiskRequest
+		arg1 agentserver.ProvideDiskDirectorRequest
 	}{arg1})
 	stub := fake.ProvideDiskStub
 	fakeReturns := fake.provideDiskReturns
@@ -50,41 +50,41 @@ func (fake *FakeDirectorClient) ProvideDiskCallCount() int {
 	return len(fake.provideDiskArgsForCall)
 }
 
-func (fake *FakeDirectorClient) ProvideDiskCalls(stub func(agentserver.ProvideDiskRequest) (agentserver.ProvideDiskResponse, error)) {
+func (fake *FakeDirectorClient) ProvideDiskCalls(stub func(agentserver.ProvideDiskDirectorRequest) (agentserver.ProvideDiskDirectorResponse, error)) {
 	fake.provideDiskMutex.Lock()
 	defer fake.provideDiskMutex.Unlock()
 	fake.ProvideDiskStub = stub
 }
 
-func (fake *FakeDirectorClient) ProvideDiskArgsForCall(i int) agentserver.ProvideDiskRequest {
+func (fake *FakeDirectorClient) ProvideDiskArgsForCall(i int) agentserver.ProvideDiskDirectorRequest {
 	fake.provideDiskMutex.RLock()
 	defer fake.provideDiskMutex.RUnlock()
 	argsForCall := fake.provideDiskArgsForCall[i]
 	return argsForCall.arg1
 }
 
-func (fake *FakeDirectorClient) ProvideDiskReturns(result1 agentserver.ProvideDiskResponse, result2 error) {
+func (fake *FakeDirectorClient) ProvideDiskReturns(result1 agentserver.ProvideDiskDirectorResponse, result2 error) {
 	fake.provideDiskMutex.Lock()
 	defer fake.provideDiskMutex.Unlock()
 	fake.ProvideDiskStub = nil
 	fake.provideDiskReturns = struct {
-		result1 agentserver.ProvideDiskResponse
+		result1 agentserver.ProvideDiskDirectorResponse
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirectorClient) ProvideDiskReturnsOnCall(i int, result1 agentserver.ProvideDiskResponse, result2 error) {
+func (fake *FakeDirectorClient) ProvideDiskReturnsOnCall(i int, result1 agentserver.ProvideDiskDirectorResponse, result2 error) {
 	fake.provideDiskMutex.Lock()
 	defer fake.provideDiskMutex.Unlock()
 	fake.ProvideDiskStub = nil
 	if fake.provideDiskReturnsOnCall == nil {
 		fake.provideDiskReturnsOnCall = make(map[int]struct {
-			result1 agentserver.ProvideDiskResponse
+			result1 agentserver.ProvideDiskDirectorResponse
 			result2 error
 		})
 	}
 	fake.provideDiskReturnsOnCall[i] = struct {
-		result1 agentserver.ProvideDiskResponse
+		result1 agentserver.ProvideDiskDirectorResponse
 		result2 error
 	}{result1, result2}
 }
