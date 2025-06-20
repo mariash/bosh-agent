@@ -6,7 +6,11 @@ import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
-const ProvideDiskTopic = "disk.provide"
+const (
+	ProvideDiskTopic = "disk.provide"
+	DetachDiskTopic  = "disk.detach"
+	DeleteDiskTopic  = "disk.delete"
+)
 
 type ProvideDiskDirectorRequest struct {
 	DiskName     string `json:"disk_name"`
@@ -24,11 +28,29 @@ type ProvideDiskDirectorResponse struct {
 	DiskHint string `json:"disk_hint"`
 }
 
+type DetachDiskDirectorRequest struct {
+	DiskName string `json:"disk_name"`
+}
+
+type DetachDiskDirectorResponse struct {
+	Error string `json:"error"`
+}
+
+type DeleteDiskDirectorRequest struct {
+	DiskName string `json:"disk_name"`
+}
+
+type DeleteDiskDirectorResponse struct {
+	Error string `json:"error"`
+}
+
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 //counterfeiter:generate . DirectorClient
 type DirectorClient interface {
 	ProvideDisk(ProvideDiskDirectorRequest) (ProvideDiskDirectorResponse, error)
+	DetachDisk(DetachDiskDirectorRequest) (DetachDiskDirectorResponse, error)
+	DeleteDisk(req DeleteDiskDirectorRequest) (DeleteDiskDirectorResponse, error)
 }
 
 type directorClient struct {
@@ -49,6 +71,30 @@ func (c directorClient) ProvideDisk(req ProvideDiskDirectorRequest) (ProvideDisk
 	}
 	if resp.Error != "" {
 		return ProvideDiskDirectorResponse{}, bosherr.Errorf("Provide disk request failed: %s", resp.Error)
+	}
+	return resp, nil
+}
+
+func (c directorClient) DetachDisk(req DetachDiskDirectorRequest) (DetachDiskDirectorResponse, error) {
+	var resp DetachDiskDirectorResponse
+	err := c.mbusHandler.Request(boshhandler.Director, DetachDiskTopic, req, &resp)
+	if err != nil {
+		return DetachDiskDirectorResponse{}, bosherr.WrapError(err, "Sending detach disk request")
+	}
+	if resp.Error != "" {
+		return DetachDiskDirectorResponse{}, bosherr.Errorf("Detach disk request failed: %s", resp.Error)
+	}
+	return resp, nil
+}
+
+func (c directorClient) DeleteDisk(req DeleteDiskDirectorRequest) (DeleteDiskDirectorResponse, error) {
+	var resp DeleteDiskDirectorResponse
+	err := c.mbusHandler.Request(boshhandler.Director, DeleteDiskTopic, req, &resp)
+	if err != nil {
+		return DeleteDiskDirectorResponse{}, bosherr.WrapError(err, "Sending delete disk request")
+	}
+	if resp.Error != "" {
+		return DeleteDiskDirectorResponse{}, bosherr.Errorf("Delete disk request failed: %s", resp.Error)
 	}
 	return resp, nil
 }

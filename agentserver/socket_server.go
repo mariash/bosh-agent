@@ -39,6 +39,57 @@ func (r ProvideDiskAgentRequest) Validate() error {
 	return nil
 }
 
+func (r ProvideDiskAgentRequest) AgentRequest() (boshhandler.Request, error) {
+	handlerRequest := payloadForHandler{Arguments: []interface{}{r.DiskName, r.DiskPoolName, r.DiskSize}}
+	payload, err := json.Marshal(handlerRequest)
+	if err != nil {
+		return nil, err
+	}
+	return boshhandler.NewAgentRequest("provide_dynamic_disk", payload), nil
+}
+
+type DetachDiskAgentRequest struct {
+	DiskName string `json:"disk_name"`
+}
+
+func (r DetachDiskAgentRequest) Validate() error {
+	if r.DiskName == "" {
+		return bosherr.Error("missing disk_name")
+	}
+
+	return nil
+}
+
+func (r DetachDiskAgentRequest) AgentRequest() (boshhandler.Request, error) {
+	handlerRequest := payloadForHandler{Arguments: []interface{}{r.DiskName}}
+	payload, err := json.Marshal(handlerRequest)
+	if err != nil {
+		return nil, err
+	}
+	return boshhandler.NewAgentRequest("detach_dynamic_disk", payload), nil
+}
+
+type DeleteDiskAgentRequest struct {
+	DiskName string `json:"disk_name"`
+}
+
+func (r DeleteDiskAgentRequest) Validate() error {
+	if r.DiskName == "" {
+		return bosherr.Error("missing disk_name")
+	}
+
+	return nil
+}
+
+func (r DeleteDiskAgentRequest) AgentRequest() (boshhandler.Request, error) {
+	handlerRequest := payloadForHandler{Arguments: []interface{}{r.DiskName}}
+	payload, err := json.Marshal(handlerRequest)
+	if err != nil {
+		return nil, err
+	}
+	return boshhandler.NewAgentRequest("delete_dynamic_disk", payload), nil
+}
+
 type TaskStatusResponse struct {
 	State  string      `json:"state"`
 	Result interface{} `json:"result,omitempty"`
@@ -85,8 +136,14 @@ func (s *socketServer) Start(handlerFunc boshhandler.Func) error {
 		s.provideDisk(w, r, handlerFunc)
 	})
 
-	mux.HandleFunc("POST /disks/{id}/detach", s.detachDisk)
-	mux.HandleFunc("DELETE /disks/{id}", s.deleteDisk)
+	mux.HandleFunc("POST /disks/{id}/detach", func(w http.ResponseWriter, r *http.Request) {
+		s.detachDisk(w, r, handlerFunc)
+	})
+
+	mux.HandleFunc("DELETE /disks/{id}", func(w http.ResponseWriter, r *http.Request) {
+		s.deleteDisk(w, r, handlerFunc)
+	})
+
 	mux.HandleFunc("GET /tasks/{id}", s.taskStatus)
 
 	server := &http.Server{
@@ -112,27 +169,57 @@ func (s *socketServer) provideDisk(w http.ResponseWriter, r *http.Request, handl
 		s.respond(w, http.StatusBadRequest, boshhandler.NewExceptionResponse(err))
 		return
 	}
+
 	err = provideDiskRequest.Validate()
 	if err != nil {
 		s.respond(w, http.StatusBadRequest, boshhandler.NewExceptionResponse(err))
 		return
 	}
 
-	handlerRequest := payloadForHandler{Arguments: []interface{}{provideDiskRequest.DiskName, provideDiskRequest.DiskPoolName, provideDiskRequest.DiskSize}}
-	payload, err := json.Marshal(handlerRequest)
+	agentRequest, err := provideDiskRequest.AgentRequest()
 	if err != nil {
 		s.respond(w, http.StatusInternalServerError, boshhandler.NewExceptionResponse(err))
 		return
 	}
 
-	resp := handlerFunc(boshhandler.NewAgentRequest("provide_dynamic_disk", payload))
+	resp := handlerFunc(agentRequest)
 	s.respond(w, http.StatusOK, resp)
 }
 
-func (s *socketServer) detachDisk(w http.ResponseWriter, r *http.Request) {
+func (s *socketServer) detachDisk(w http.ResponseWriter, r *http.Request, handlerFunc boshhandler.Func) {
+	detachDiskRequest := DetachDiskAgentRequest{DiskName: r.PathValue("id")}
+	err := detachDiskRequest.Validate()
+	if err != nil {
+		s.respond(w, http.StatusBadRequest, boshhandler.NewExceptionResponse(err))
+		return
+	}
+
+	agentRequest, err := detachDiskRequest.AgentRequest()
+	if err != nil {
+		s.respond(w, http.StatusInternalServerError, boshhandler.NewExceptionResponse(err))
+		return
+	}
+
+	resp := handlerFunc(agentRequest)
+	s.respond(w, http.StatusOK, resp)
 }
 
-func (s *socketServer) deleteDisk(w http.ResponseWriter, r *http.Request) {
+func (s *socketServer) deleteDisk(w http.ResponseWriter, r *http.Request, handlerFunc boshhandler.Func) {
+	deleteDiskRequest := DeleteDiskAgentRequest{DiskName: r.PathValue("id")}
+	err := deleteDiskRequest.Validate()
+	if err != nil {
+		s.respond(w, http.StatusBadRequest, boshhandler.NewExceptionResponse(err))
+		return
+	}
+
+	agentRequest, err := deleteDiskRequest.AgentRequest()
+	if err != nil {
+		s.respond(w, http.StatusInternalServerError, boshhandler.NewExceptionResponse(err))
+		return
+	}
+
+	resp := handlerFunc(agentRequest)
+	s.respond(w, http.StatusOK, resp)
 }
 
 func (s *socketServer) taskStatus(w http.ResponseWriter, r *http.Request) {

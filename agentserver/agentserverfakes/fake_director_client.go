@@ -8,6 +8,32 @@ import (
 )
 
 type FakeDirectorClient struct {
+	DeleteDiskStub        func(agentserver.DeleteDiskDirectorRequest) (agentserver.DeleteDiskDirectorResponse, error)
+	deleteDiskMutex       sync.RWMutex
+	deleteDiskArgsForCall []struct {
+		arg1 agentserver.DeleteDiskDirectorRequest
+	}
+	deleteDiskReturns struct {
+		result1 agentserver.DeleteDiskDirectorResponse
+		result2 error
+	}
+	deleteDiskReturnsOnCall map[int]struct {
+		result1 agentserver.DeleteDiskDirectorResponse
+		result2 error
+	}
+	DetachDiskStub        func(agentserver.DetachDiskDirectorRequest) (agentserver.DetachDiskDirectorResponse, error)
+	detachDiskMutex       sync.RWMutex
+	detachDiskArgsForCall []struct {
+		arg1 agentserver.DetachDiskDirectorRequest
+	}
+	detachDiskReturns struct {
+		result1 agentserver.DetachDiskDirectorResponse
+		result2 error
+	}
+	detachDiskReturnsOnCall map[int]struct {
+		result1 agentserver.DetachDiskDirectorResponse
+		result2 error
+	}
 	ProvideDiskStub        func(agentserver.ProvideDiskDirectorRequest) (agentserver.ProvideDiskDirectorResponse, error)
 	provideDiskMutex       sync.RWMutex
 	provideDiskArgsForCall []struct {
@@ -23,6 +49,134 @@ type FakeDirectorClient struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeDirectorClient) DeleteDisk(arg1 agentserver.DeleteDiskDirectorRequest) (agentserver.DeleteDiskDirectorResponse, error) {
+	fake.deleteDiskMutex.Lock()
+	ret, specificReturn := fake.deleteDiskReturnsOnCall[len(fake.deleteDiskArgsForCall)]
+	fake.deleteDiskArgsForCall = append(fake.deleteDiskArgsForCall, struct {
+		arg1 agentserver.DeleteDiskDirectorRequest
+	}{arg1})
+	stub := fake.DeleteDiskStub
+	fakeReturns := fake.deleteDiskReturns
+	fake.recordInvocation("DeleteDisk", []interface{}{arg1})
+	fake.deleteDiskMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirectorClient) DeleteDiskCallCount() int {
+	fake.deleteDiskMutex.RLock()
+	defer fake.deleteDiskMutex.RUnlock()
+	return len(fake.deleteDiskArgsForCall)
+}
+
+func (fake *FakeDirectorClient) DeleteDiskCalls(stub func(agentserver.DeleteDiskDirectorRequest) (agentserver.DeleteDiskDirectorResponse, error)) {
+	fake.deleteDiskMutex.Lock()
+	defer fake.deleteDiskMutex.Unlock()
+	fake.DeleteDiskStub = stub
+}
+
+func (fake *FakeDirectorClient) DeleteDiskArgsForCall(i int) agentserver.DeleteDiskDirectorRequest {
+	fake.deleteDiskMutex.RLock()
+	defer fake.deleteDiskMutex.RUnlock()
+	argsForCall := fake.deleteDiskArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirectorClient) DeleteDiskReturns(result1 agentserver.DeleteDiskDirectorResponse, result2 error) {
+	fake.deleteDiskMutex.Lock()
+	defer fake.deleteDiskMutex.Unlock()
+	fake.DeleteDiskStub = nil
+	fake.deleteDiskReturns = struct {
+		result1 agentserver.DeleteDiskDirectorResponse
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirectorClient) DeleteDiskReturnsOnCall(i int, result1 agentserver.DeleteDiskDirectorResponse, result2 error) {
+	fake.deleteDiskMutex.Lock()
+	defer fake.deleteDiskMutex.Unlock()
+	fake.DeleteDiskStub = nil
+	if fake.deleteDiskReturnsOnCall == nil {
+		fake.deleteDiskReturnsOnCall = make(map[int]struct {
+			result1 agentserver.DeleteDiskDirectorResponse
+			result2 error
+		})
+	}
+	fake.deleteDiskReturnsOnCall[i] = struct {
+		result1 agentserver.DeleteDiskDirectorResponse
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirectorClient) DetachDisk(arg1 agentserver.DetachDiskDirectorRequest) (agentserver.DetachDiskDirectorResponse, error) {
+	fake.detachDiskMutex.Lock()
+	ret, specificReturn := fake.detachDiskReturnsOnCall[len(fake.detachDiskArgsForCall)]
+	fake.detachDiskArgsForCall = append(fake.detachDiskArgsForCall, struct {
+		arg1 agentserver.DetachDiskDirectorRequest
+	}{arg1})
+	stub := fake.DetachDiskStub
+	fakeReturns := fake.detachDiskReturns
+	fake.recordInvocation("DetachDisk", []interface{}{arg1})
+	fake.detachDiskMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirectorClient) DetachDiskCallCount() int {
+	fake.detachDiskMutex.RLock()
+	defer fake.detachDiskMutex.RUnlock()
+	return len(fake.detachDiskArgsForCall)
+}
+
+func (fake *FakeDirectorClient) DetachDiskCalls(stub func(agentserver.DetachDiskDirectorRequest) (agentserver.DetachDiskDirectorResponse, error)) {
+	fake.detachDiskMutex.Lock()
+	defer fake.detachDiskMutex.Unlock()
+	fake.DetachDiskStub = stub
+}
+
+func (fake *FakeDirectorClient) DetachDiskArgsForCall(i int) agentserver.DetachDiskDirectorRequest {
+	fake.detachDiskMutex.RLock()
+	defer fake.detachDiskMutex.RUnlock()
+	argsForCall := fake.detachDiskArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirectorClient) DetachDiskReturns(result1 agentserver.DetachDiskDirectorResponse, result2 error) {
+	fake.detachDiskMutex.Lock()
+	defer fake.detachDiskMutex.Unlock()
+	fake.DetachDiskStub = nil
+	fake.detachDiskReturns = struct {
+		result1 agentserver.DetachDiskDirectorResponse
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirectorClient) DetachDiskReturnsOnCall(i int, result1 agentserver.DetachDiskDirectorResponse, result2 error) {
+	fake.detachDiskMutex.Lock()
+	defer fake.detachDiskMutex.Unlock()
+	fake.DetachDiskStub = nil
+	if fake.detachDiskReturnsOnCall == nil {
+		fake.detachDiskReturnsOnCall = make(map[int]struct {
+			result1 agentserver.DetachDiskDirectorResponse
+			result2 error
+		})
+	}
+	fake.detachDiskReturnsOnCall[i] = struct {
+		result1 agentserver.DetachDiskDirectorResponse
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeDirectorClient) ProvideDisk(arg1 agentserver.ProvideDiskDirectorRequest) (agentserver.ProvideDiskDirectorResponse, error) {
@@ -92,6 +246,10 @@ func (fake *FakeDirectorClient) ProvideDiskReturnsOnCall(i int, result1 agentser
 func (fake *FakeDirectorClient) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.deleteDiskMutex.RLock()
+	defer fake.deleteDiskMutex.RUnlock()
+	fake.detachDiskMutex.RLock()
+	defer fake.detachDiskMutex.RUnlock()
 	fake.provideDiskMutex.RLock()
 	defer fake.provideDiskMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

@@ -281,4 +281,19 @@ var _ = Describe("directorActionFactory", func() {
 
 		Expect(action).To(Equal(boshaction.NewProvideDynamicDiskAction(directorClient, specService, settingsService, platform)))
 	})
+
+	It("detach_dynamic_disk", func() {
+		action, err := factory.Create("agent", "detach_dynamic_disk")
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(action).To(Equal(boshaction.NewDetachDynamicDiskAction(directorClient)))
+	})
+
+	It("delete_dynamic_disk", func() {
+		action, err := factory.Create("agent", "delete_dynamic_disk")
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(action).To(Equal(boshaction.NewDeleteDynamicDiskAction(directorClient)))
+	})
+
 })

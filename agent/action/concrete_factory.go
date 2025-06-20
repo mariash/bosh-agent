@@ -99,6 +99,8 @@ func NewFactory(
 		},
 		agentActions: map[string]Action{
 			"provide_dynamic_disk": NewProvideDynamicDiskAction(directorClient, specService, settingsService, platform),
+			"detach_dynamic_disk":  NewDetachDynamicDiskAction(directorClient),
+			"delete_dynamic_disk":  NewDeleteDynamicDiskAction(directorClient),
 		},
 	}
 }

@@ -89,6 +89,64 @@ var _ = Describe("SocketServer", func() {
 			})
 		})
 	})
+
+	Describe("POST /disks/{id}/detach", func() {
+		It("calls provided handler", func() {
+			payload := []byte(`{}`)
+
+			httpResponse, err := socketClient.Post("http://unix/disks/some-disk-name/detach", "application/json", bytes.NewBuffer(payload))
+			Expect(err).NotTo(HaveOccurred())
+
+			expectedPayload := []byte(`{"arguments":["some-disk-name"]}`)
+			Expect(receivedRequest).To(Equal(boshhandler.NewAgentRequest("detach_dynamic_disk", expectedPayload)))
+
+			httpBody, readErr := io.ReadAll(httpResponse.Body)
+			Expect(readErr).ToNot(HaveOccurred())
+			defer httpResponse.Body.Close()
+
+			Expect(httpBody).To(Equal([]byte(`{"task_id":"1234","state":"running"}`)))
+		})
+
+		Context("when request is invalid", func() {
+			It("returns an error", func() {
+				httpResponse, err := socketClient.Post(`http://unix/disks//detach`, "application/json", bytes.NewBuffer([]byte("{}")))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(httpResponse.StatusCode).To(Equal(http.StatusMethodNotAllowed))
+			})
+		})
+	})
+
+	Describe("DELETE /disks/{id}", func() {
+		It("calls provided handler", func() {
+			req, err := http.NewRequest(http.MethodDelete, "http://unix/disks/some-disk-name", nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			httpResponse, err := socketClient.Do(req)
+			Expect(err).NotTo(HaveOccurred())
+
+			expectedPayload := []byte(`{"arguments":["some-disk-name"]}`)
+			Expect(receivedRequest).To(Equal(boshhandler.NewAgentRequest("delete_dynamic_disk", expectedPayload)))
+
+			httpBody, readErr := io.ReadAll(httpResponse.Body)
+			Expect(readErr).ToNot(HaveOccurred())
+			defer httpResponse.Body.Close()
+
+			Expect(httpBody).To(Equal([]byte(`{"task_id":"1234","state":"running"}`)))
+		})
+
+		Context("when request is invalid", func() {
+			It("returns an error", func() {
+				req, err := http.NewRequest(http.MethodDelete, "http://unix/disks", nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				httpResponse, err := socketClient.Do(req)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(httpResponse.StatusCode).To(Equal(http.StatusMethodNotAllowed))
+			})
+		})
+	})
 })
 
 func waitForServerToStart(httpClient *http.Client) {
