@@ -241,8 +241,11 @@ func (app *app) Setup(opts Options) error {
 		app.dirProvider,
 	)
 
-	socketPath := filepath.Join(app.dirProvider.BoshDir(), "agent.sock")
-	agentServer := boshagentserver.NewSocketServer(app.logger, socketPath, taskService)
+	agentServerProvider := boshagentserver.NewProvider(app.logger, app.dirProvider, taskService)
+	agentServer, err := agentServerProvider.Get(opts.PlatformName)
+	if err != nil {
+		return bosherr.WrapError(err, "Getting agent server")
+	}
 
 	app.agent = boshagent.New(
 		app.logger,
