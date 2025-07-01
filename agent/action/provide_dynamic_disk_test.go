@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/bosh-agent/v2/agent/action"
-	fakeapplyspec "github.com/cloudfoundry/bosh-agent/v2/agent/applier/applyspec/fakes"
 	"github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	fakeagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver/agentserverfakes"
 	"github.com/cloudfoundry/bosh-agent/v2/platform/platformfakes"
@@ -22,13 +21,11 @@ var _ = Describe("ProvideDynamicDisk", func() {
 
 		settingsService *fakesettings.FakeSettingsService
 		directorClient  *fakeagentserver.FakeDirectorClient
-		specService     *fakeapplyspec.FakeV1Service
 	)
 
 	BeforeEach(func() {
 		platform = &platformfakes.FakePlatform{}
 		directorClient = &fakeagentserver.FakeDirectorClient{}
-		specService = fakeapplyspec.NewFakeV1Service()
 
 		settingsService = &fakesettings.FakeSettingsService{
 			Settings: boshsettings.Settings{
@@ -40,7 +37,7 @@ var _ = Describe("ProvideDynamicDisk", func() {
 			},
 		}
 
-		provideDynamicDiskAction = action.NewProvideDynamicDiskAction(directorClient, specService, settingsService, platform)
+		provideDynamicDiskAction = action.NewProvideDynamicDiskAction(directorClient, settingsService, platform)
 
 		directorClient.ProvideDiskReturns(agentserver.ProvideDiskDirectorResponse{DiskName: "some-disk-name", DiskHint: "some-disk-hint"}, nil)
 		platform.SetupDynamicDiskReturns("/some/device/path", nil)
