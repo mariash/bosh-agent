@@ -98,7 +98,7 @@ func NewFactory(
 			"sync_dns_with_signed_url": NewSyncDNSWithSignedURL(settingsService, platform, logger, blobstoreDelegator),
 		},
 		agentActions: map[string]Action{
-			"provide_dynamic_disk": NewProvideDynamicDiskAction(directorClient, specService, settingsService, platform),
+			"provide_dynamic_disk": NewProvideDynamicDiskAction(directorClient, settingsService, platform),
 			"detach_dynamic_disk":  NewDetachDynamicDiskAction(directorClient),
 			"delete_dynamic_disk":  NewDeleteDynamicDiskAction(directorClient),
 		},

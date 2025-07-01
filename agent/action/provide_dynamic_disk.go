@@ -3,7 +3,6 @@ package action
 import (
 	"errors"
 
-	boshas "github.com/cloudfoundry/bosh-agent/v2/agent/applier/applyspec"
 	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshplatform "github.com/cloudfoundry/bosh-agent/v2/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/v2/settings"
@@ -12,7 +11,6 @@ import (
 
 type ProvideDynamicDiskAction struct {
 	directorClient  boshagentserver.DirectorClient
-	specService     boshas.V1Service
 	settingsService boshsettings.Service
 	platform        boshplatform.Platform
 }
@@ -23,25 +21,17 @@ type ProvideDynamicDiskTaskResult struct {
 
 func NewProvideDynamicDiskAction(
 	directorClient boshagentserver.DirectorClient,
-	specService boshas.V1Service,
 	settingsService boshsettings.Service,
 	platform boshplatform.Platform) ProvideDynamicDiskAction {
 	return ProvideDynamicDiskAction{
 		directorClient:  directorClient,
-		specService:     specService,
 		settingsService: settingsService,
 		platform:        platform,
 	}
 }
 
 func (a ProvideDynamicDiskAction) Run(diskName string, diskPoolName string, diskSize uint) (interface{}, error) {
-	spec, err := a.specService.Get()
-	if err != nil {
-		return "", bosherr.WrapError(err, "Getting job spec")
-	}
-
 	resp, err := a.directorClient.ProvideDisk(boshagentserver.ProvideDiskDirectorRequest{
-		Deployment:   spec.Deployment,
 		DiskSize:     diskSize,
 		DiskName:     diskName,
 		DiskPoolName: diskPoolName,

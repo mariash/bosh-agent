@@ -279,7 +279,7 @@ var _ = Describe("directorActionFactory", func() {
 		action, err := factory.Create("agent", "provide_dynamic_disk")
 		Expect(err).ToNot(HaveOccurred())
 
-		Expect(action).To(Equal(boshaction.NewProvideDynamicDiskAction(directorClient, specService, settingsService, platform)))
+		Expect(action).To(Equal(boshaction.NewProvideDynamicDiskAction(directorClient, settingsService, platform)))
 	})
 
 	It("detach_dynamic_disk", func() {
