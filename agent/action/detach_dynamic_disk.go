@@ -3,7 +3,6 @@ package action
 import (
 	"errors"
 
-	"github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
@@ -14,7 +13,7 @@ type DetachDynamicDiskAction struct {
 
 type DetachDynamicDiskTaskResult struct{}
 
-func NewDetachDynamicDiskAction(directorClient agentserver.DirectorClient) DetachDynamicDiskAction {
+func NewDetachDynamicDiskAction(directorClient boshagentserver.DirectorClient) DetachDynamicDiskAction {
 	return DetachDynamicDiskAction{
 		directorClient: directorClient,
 	}

@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	boshas "github.com/cloudfoundry/bosh-agent/v2/agent/applier/applyspec"
-	"github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshplatform "github.com/cloudfoundry/bosh-agent/v2/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/v2/settings"
@@ -23,7 +22,7 @@ type ProvideDynamicDiskTaskResult struct {
 }
 
 func NewProvideDynamicDiskAction(
-	directorClient agentserver.DirectorClient,
+	directorClient boshagentserver.DirectorClient,
 	specService boshas.V1Service,
 	settingsService boshsettings.Service,
 	platform boshplatform.Platform) ProvideDynamicDiskAction {

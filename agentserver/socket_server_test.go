@@ -73,7 +73,7 @@ var _ = Describe("SocketServer", func() {
 
 			httpBody, readErr := io.ReadAll(httpResponse.Body)
 			Expect(readErr).ToNot(HaveOccurred())
-			defer httpResponse.Body.Close()
+			defer httpResponse.Body.Close() //nolint:errcheck
 
 			Expect(httpBody).To(Equal([]byte(`{"task_id":"1234","state":"running"}`)))
 		})
@@ -102,7 +102,7 @@ var _ = Describe("SocketServer", func() {
 
 			httpBody, readErr := io.ReadAll(httpResponse.Body)
 			Expect(readErr).ToNot(HaveOccurred())
-			defer httpResponse.Body.Close()
+			defer httpResponse.Body.Close() //nolint:errcheck
 
 			Expect(httpBody).To(Equal([]byte(`{"task_id":"1234","state":"running"}`)))
 		})
@@ -130,7 +130,7 @@ var _ = Describe("SocketServer", func() {
 
 			httpBody, readErr := io.ReadAll(httpResponse.Body)
 			Expect(readErr).ToNot(HaveOccurred())
-			defer httpResponse.Body.Close()
+			defer httpResponse.Body.Close() //nolint:errcheck
 
 			Expect(httpBody).To(Equal([]byte(`{"task_id":"1234","state":"running"}`)))
 		})

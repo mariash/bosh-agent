@@ -246,7 +246,7 @@ func (s *socketServer) respond(w http.ResponseWriter, statusCode int, resp inter
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		s.logger.Error(socketServerLogTag, "Failed marshalling response: %s", err.Error())
-		fmt.Fprintf(w, "Failed marshalling response: %s", err.Error())
+		fmt.Fprintf(w, "Failed marshalling response: %s", err.Error()) //nolint:errcheck
 		return
 	}
 
@@ -254,7 +254,7 @@ func (s *socketServer) respond(w http.ResponseWriter, statusCode int, resp inter
 	_, err = w.Write(respBytes)
 	if err != nil {
 		s.logger.Error(socketServerLogTag, "Failed sending response: %s", err.Error())
-		fmt.Fprintf(w, "Failed sending response: %s", err.Error())
+		fmt.Fprintf(w, "Failed sending response: %s", err.Error()) //nolint:errcheck
 	}
 }
 
@@ -263,6 +263,6 @@ func (s *socketServer) parseRequest(r *http.Request, object interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
 	return nil
 }

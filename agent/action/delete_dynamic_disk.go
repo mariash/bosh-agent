@@ -3,7 +3,6 @@ package action
 import (
 	"errors"
 
-	"github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
@@ -14,7 +13,7 @@ type DeleteDynamicDiskAction struct {
 
 type DeleteDynamicDiskTaskResult struct{}
 
-func NewDeleteDynamicDiskAction(directorClient agentserver.DirectorClient) DeleteDynamicDiskAction {
+func NewDeleteDynamicDiskAction(directorClient boshagentserver.DirectorClient) DeleteDynamicDiskAction {
 	return DeleteDynamicDiskAction{
 		directorClient: directorClient,
 	}
