@@ -61,11 +61,11 @@ var _ = Describe("SocketServer", func() {
 		os.RemoveAll(tmpDir) //nolint:errcheck
 	})
 
-	Describe("POST /disks", func() {
+	Describe("POST /v1/disks", func() {
 		It("calls provided handler", func() {
 			payload := []byte(`{"disk_name":"some-disk-name","disk_pool_name":"some-disk-pool-name","disk_size":1024}`)
 
-			httpResponse, err := socketClient.Post("http://unix/disks", "application/json", bytes.NewBuffer(payload))
+			httpResponse, err := socketClient.Post("http://unix/v1/disks", "application/json", bytes.NewBuffer(payload))
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedPayload := []byte(`{"arguments":["some-disk-name","some-disk-pool-name",1024]}`)
@@ -82,7 +82,7 @@ var _ = Describe("SocketServer", func() {
 			It("returns an error", func() {
 				payload := []byte(`{"invalid-key":"invalid-value"}`)
 
-				httpResponse, err := socketClient.Post("http://unix/disks", "application/json", bytes.NewBuffer(payload))
+				httpResponse, err := socketClient.Post("http://unix/v1/disks", "application/json", bytes.NewBuffer(payload))
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(httpResponse.StatusCode).To(Equal(http.StatusBadRequest))
@@ -90,11 +90,11 @@ var _ = Describe("SocketServer", func() {
 		})
 	})
 
-	Describe("POST /disks/{id}/detach", func() {
+	Describe("POST /v1/disks/{id}/detach", func() {
 		It("calls provided handler", func() {
 			payload := []byte(`{}`)
 
-			httpResponse, err := socketClient.Post("http://unix/disks/some-disk-name/detach", "application/json", bytes.NewBuffer(payload))
+			httpResponse, err := socketClient.Post("http://unix/v1/disks/some-disk-name/detach", "application/json", bytes.NewBuffer(payload))
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedPayload := []byte(`{"arguments":["some-disk-name"]}`)
@@ -109,7 +109,7 @@ var _ = Describe("SocketServer", func() {
 
 		Context("when request is invalid", func() {
 			It("returns an error", func() {
-				httpResponse, err := socketClient.Post(`http://unix/disks//detach`, "application/json", bytes.NewBuffer([]byte("{}")))
+				httpResponse, err := socketClient.Post(`http://unix/v1/disks//detach`, "application/json", bytes.NewBuffer([]byte("{}")))
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(httpResponse.StatusCode).To(Equal(http.StatusMethodNotAllowed))
@@ -117,9 +117,9 @@ var _ = Describe("SocketServer", func() {
 		})
 	})
 
-	Describe("DELETE /disks/{id}", func() {
+	Describe("DELETE /v1/disks/{id}", func() {
 		It("calls provided handler", func() {
-			req, err := http.NewRequest(http.MethodDelete, "http://unix/disks/some-disk-name", nil)
+			req, err := http.NewRequest(http.MethodDelete, "http://unix/v1/disks/some-disk-name", nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			httpResponse, err := socketClient.Do(req)
@@ -137,7 +137,7 @@ var _ = Describe("SocketServer", func() {
 
 		Context("when request is invalid", func() {
 			It("returns an error", func() {
-				req, err := http.NewRequest(http.MethodDelete, "http://unix/disks", nil)
+				req, err := http.NewRequest(http.MethodDelete, "http://unix/v1/disks", nil)
 				Expect(err).NotTo(HaveOccurred())
 
 				httpResponse, err := socketClient.Do(req)
@@ -151,7 +151,7 @@ var _ = Describe("SocketServer", func() {
 
 func waitForServerToStart(httpClient *http.Client) {
 	Eventually(func() error {
-		httpResponse, err := httpClient.Get("http://unix/tasks") //nolint:noctx
+		httpResponse, err := httpClient.Get("http://unix/v1/tasks") //nolint:noctx
 		if err == nil {
 			httpResponse.Body.Close() //nolint:errcheck
 		}

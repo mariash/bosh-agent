@@ -132,19 +132,19 @@ func (s *socketServer) Start(handlerFunc boshhandler.Func) error {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /disks", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /v1/disks", func(w http.ResponseWriter, r *http.Request) {
 		s.provideDisk(w, r, handlerFunc)
 	})
 
-	mux.HandleFunc("POST /disks/{id}/detach", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /v1/disks/{id}/detach", func(w http.ResponseWriter, r *http.Request) {
 		s.detachDisk(w, r, handlerFunc)
 	})
 
-	mux.HandleFunc("DELETE /disks/{id}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("DELETE /v1/disks/{id}", func(w http.ResponseWriter, r *http.Request) {
 		s.deleteDisk(w, r, handlerFunc)
 	})
 
-	mux.HandleFunc("GET /tasks/{id}", s.taskStatus)
+	mux.HandleFunc("GET /v1/tasks/{id}", s.taskStatus)
 
 	server := &http.Server{
 		Handler: mux,
