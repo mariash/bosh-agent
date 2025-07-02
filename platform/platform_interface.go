@@ -3,6 +3,7 @@ package platform
 import (
 	"log"
 
+	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	"github.com/cloudfoundry/bosh-agent/v2/platform/cert"
 
 	boshcmd "github.com/cloudfoundry/bosh-utils/fileutil"
@@ -41,6 +42,7 @@ type Platform interface {
 	GetAuditLogger() AuditLogger
 	GetDevicePathResolver() (devicePathResolver boshdpresolv.DevicePathResolver)
 	GetServiceManager() servicemanager.ServiceManager
+	GetAgentServer() boshagentserver.AgentServer
 	GetAgentSettingsPath(tmpfs bool) string
 	GetPersistentDiskSettingsPath(tmpfs bool) string
 	GetUpdateSettingsPath(tmpfs bool) string

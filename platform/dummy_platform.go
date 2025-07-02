@@ -13,6 +13,7 @@ import (
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	boshlogstarprovider "github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider"
+	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshdpresolv "github.com/cloudfoundry/bosh-agent/v2/infrastructure/devicepathresolver"
 	boshcert "github.com/cloudfoundry/bosh-agent/v2/platform/cert"
 	boshstats "github.com/cloudfoundry/bosh-agent/v2/platform/stats"
@@ -115,6 +116,10 @@ func (p dummyPlatform) GetVitalsService() (service boshvitals.Service) {
 
 func (p dummyPlatform) GetServiceManager() servicemanager.ServiceManager {
 	return servicemanager.NewDummyServiceManager()
+}
+
+func (p dummyPlatform) GetAgentServer() boshagentserver.AgentServer {
+	return boshagentserver.NewNoopServer(p.logger)
 }
 
 func (p dummyPlatform) GetDevicePathResolver() (devicePathResolver boshdpresolv.DevicePathResolver) {

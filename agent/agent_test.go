@@ -62,11 +62,11 @@ func init() { //nolint:funlen,gochecknoinits
 			startManager.CanStartReturns(true)
 
 			platform.GetVitalsServiceReturns(vitalService)
+			platform.GetAgentServerReturns(agentServer)
 
 			boshAgent = agent.New(
 				logger,
 				handler,
-				agentServer,
 				platform,
 				actionDispatcher,
 				jobSupervisor,
@@ -153,7 +153,6 @@ func init() { //nolint:funlen,gochecknoinits
 					boshAgent = agent.New(
 						logger,
 						handler,
-						agentServer,
 						platform,
 						actionDispatcher,
 						jobSupervisor,

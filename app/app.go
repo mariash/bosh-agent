@@ -84,7 +84,11 @@ func (app *app) Setup(opts Options) error {
 	}
 
 	timeService := clock.NewClock()
-	platformProvider := boshplatform.NewProvider(app.logger, app.dirProvider, statsCollector, app.fs, config.Platform, state, timeService, auditLogger)
+	uuidGen := boshuuid.NewGenerator()
+
+	taskService := boshtask.NewAsyncTaskService(uuidGen, app.logger)
+
+	platformProvider := boshplatform.NewProvider(app.logger, app.dirProvider, statsCollector, app.fs, config.Platform, state, timeService, auditLogger, taskService)
 
 	app.platform, err = platformProvider.Get(opts.PlatformName)
 	if err != nil {
@@ -189,10 +193,6 @@ func (app *app) Setup(opts Options) error {
 		timeService,
 	)
 
-	uuidGen := boshuuid.NewGenerator()
-
-	taskService := boshtask.NewAsyncTaskService(uuidGen, app.logger)
-
 	taskManager := boshtask.NewManagerProvider().NewManager(
 		app.logger,
 		app.platform.GetFs(),
@@ -241,16 +241,9 @@ func (app *app) Setup(opts Options) error {
 		app.dirProvider,
 	)
 
-	agentServerProvider := boshagentserver.NewProvider(app.logger, app.dirProvider, taskService)
-	agentServer, err := agentServerProvider.Get(opts.PlatformName)
-	if err != nil {
-		return bosherr.WrapError(err, "Getting agent server")
-	}
-
 	app.agent = boshagent.New(
 		app.logger,
 		mbusHandler,
-		agentServer,
 		app.platform,
 		actionDispatcher,
 		jobSupervisor,

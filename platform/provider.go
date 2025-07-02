@@ -2,6 +2,7 @@ package platform
 
 import (
 	gonet "net"
+	"path/filepath"
 	"time"
 
 	"code.cloudfoundry.org/clock"
@@ -14,6 +15,8 @@ import (
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
 
 	boshlogstarprovider "github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider"
+	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
+	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	"github.com/cloudfoundry/bosh-agent/v2/infrastructure/devicepathresolver"
 	boshcdrom "github.com/cloudfoundry/bosh-agent/v2/platform/cdrom"
 	boshcert "github.com/cloudfoundry/bosh-agent/v2/platform/cert"
@@ -54,7 +57,7 @@ type Options struct {
 	Windows WindowsOptions
 }
 
-func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsCollector boshstats.Collector, fs boshsys.FileSystem, options Options, bootstrapState *BootstrapState, clock clock.Clock, auditLogger AuditLogger) Provider {
+func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsCollector boshstats.Collector, fs boshsys.FileSystem, options Options, bootstrapState *BootstrapState, clock clock.Clock, auditLogger AuditLogger, taskService boshtask.Service) Provider {
 	runner := boshsys.NewExecCmdRunner(logger)
 
 	diskManagerOpts := boshdisk.LinuxDiskManagerOpts{
@@ -153,6 +156,9 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 	uuidGenerator := boshuuid.NewGenerator()
 	logsTarProvider := boshlogstarprovider.NewLogsTarProvider(compressor, copier, dirProvider)
 
+	socketPath := filepath.Join(dirProvider.BoshDir(), "agent.sock")
+	socketServer := boshagentserver.NewSocketServer(logger, socketPath, taskService)
+
 	var centos = func() Platform {
 		return NewLinuxPlatform(
 			fs,
@@ -176,6 +182,7 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 			auditLogger,
 			logsTarProvider,
 			serviceManager,
+			socketServer,
 		)
 	}
 
@@ -202,6 +209,7 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 			auditLogger,
 			logsTarProvider,
 			serviceManager,
+			socketServer,
 		)
 	}
 

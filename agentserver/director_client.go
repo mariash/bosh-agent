@@ -2,7 +2,6 @@ package agentserver
 
 import (
 	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
-	boshmbus "github.com/cloudfoundry/bosh-agent/v2/mbus"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
@@ -53,11 +52,20 @@ type DirectorClient interface {
 	DeleteDisk(req DeleteDiskDirectorRequest) (DeleteDiskDirectorResponse, error)
 }
 
-type directorClient struct {
-	mbusHandler boshmbus.Handler
+type Handler interface {
+	Run(boshhandler.Func) error
+	Start(boshhandler.Func) error
+	RegisterAdditionalFunc(boshhandler.Func)
+	Send(target boshhandler.Target, topic boshhandler.Topic, message interface{}) error
+	Request(target boshhandler.Target, topic boshhandler.Topic, message interface{}, response interface{}) error
+	Stop()
 }
 
-func NewDirectorClient(mbusHandler boshmbus.Handler) DirectorClient {
+type directorClient struct {
+	mbusHandler Handler
+}
+
+func NewDirectorClient(mbusHandler Handler) DirectorClient {
 	return directorClient{
 		mbusHandler: mbusHandler,
 	}

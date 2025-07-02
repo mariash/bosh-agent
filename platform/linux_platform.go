@@ -19,6 +19,7 @@ import (
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
 
 	boshlogstarprovider "github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider"
+	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshdpresolv "github.com/cloudfoundry/bosh-agent/v2/infrastructure/devicepathresolver"
 	"github.com/cloudfoundry/bosh-agent/v2/platform/cdrom"
 	boshcert "github.com/cloudfoundry/bosh-agent/v2/platform/cert"
@@ -112,6 +113,7 @@ type linux struct {
 	auditLogger            AuditLogger
 	logsTarProvider        boshlogstarprovider.LogsTarProvider
 	serviceManager         servicemanager.ServiceManager
+	agentServer            boshagentserver.AgentServer
 }
 
 func NewLinuxPlatform(
@@ -136,6 +138,7 @@ func NewLinuxPlatform(
 	auditLogger AuditLogger,
 	logsTarProvider boshlogstarprovider.LogsTarProvider,
 	serviceManager servicemanager.ServiceManager,
+	agentServer boshagentserver.AgentServer,
 ) Platform {
 	return &linux{
 		fs:                     fs,
@@ -159,6 +162,7 @@ func NewLinuxPlatform(
 		auditLogger:            auditLogger,
 		logsTarProvider:        logsTarProvider,
 		serviceManager:         serviceManager,
+		agentServer:            agentServer,
 	}
 }
 
@@ -211,6 +215,10 @@ func (p linux) GetVitalsService() (service boshvitals.Service) {
 
 func (p linux) GetServiceManager() servicemanager.ServiceManager {
 	return p.serviceManager
+}
+
+func (p linux) GetAgentServer() boshagentserver.AgentServer {
+	return p.agentServer
 }
 
 func (p linux) GetFileContentsFromCDROM(fileName string) (content []byte, err error) {

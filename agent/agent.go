@@ -12,7 +12,6 @@ import (
 
 	boshalert "github.com/cloudfoundry/bosh-agent/v2/agent/alert"
 	boshas "github.com/cloudfoundry/bosh-agent/v2/agent/applier/applyspec"
-	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
 	boshjobsuper "github.com/cloudfoundry/bosh-agent/v2/jobsupervisor"
 	boshplatform "github.com/cloudfoundry/bosh-agent/v2/platform"
@@ -39,7 +38,6 @@ type StartManager interface {
 type Agent struct {
 	logger            boshlog.Logger
 	mbusHandler       boshhandler.Handler
-	agentServer       boshagentserver.AgentServer
 	platform          boshplatform.Platform
 	actionDispatcher  ActionDispatcher
 	heartbeatInterval time.Duration
@@ -54,7 +52,6 @@ type Agent struct {
 func New(
 	logger boshlog.Logger,
 	mbusHandler boshhandler.Handler,
-	agentServer boshagentserver.AgentServer,
 	platform boshplatform.Platform,
 	actionDispatcher ActionDispatcher,
 	jobSupervisor boshjobsuper.JobSupervisor,
@@ -68,7 +65,6 @@ func New(
 	return Agent{
 		logger:            logger,
 		mbusHandler:       mbusHandler,
-		agentServer:       agentServer,
 		platform:          platform,
 		actionDispatcher:  actionDispatcher,
 		heartbeatInterval: heartbeatInterval,
@@ -136,7 +132,8 @@ func (a Agent) generateHeartbeats(errCh chan error) {
 }
 
 func (a Agent) startAgentServer(errCh chan error) {
-	err := a.agentServer.Start(a.actionDispatcher.Dispatch)
+	agentServer := a.platform.GetAgentServer()
+	err := agentServer.Start(a.actionDispatcher.Dispatch)
 	if err != nil {
 		err = bosherr.WrapError(err, "Starting agent server")
 		errCh <- err

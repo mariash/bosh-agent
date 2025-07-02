@@ -23,6 +23,7 @@ import (
 	fakeuuidgen "github.com/cloudfoundry/bosh-utils/uuid/fakes"
 
 	fakelogstarprovider "github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider/logstarproviderfakes"
+	fakeagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver/agentserverfakes"
 	fakedpresolv "github.com/cloudfoundry/bosh-agent/v2/infrastructure/devicepathresolver/fakes"
 	. "github.com/cloudfoundry/bosh-agent/v2/platform"
 	fakecdrom "github.com/cloudfoundry/bosh-agent/v2/platform/cdrom/fakes"
@@ -59,6 +60,7 @@ var _ = Describe("LinuxPlatform", func() {
 		fakeAuditLogger            *fakeplat.FakeAuditLogger
 		fakeLogsTarProvider        *fakelogstarprovider.FakeLogsTarProvider
 		serviceManager             *servicemanagerfakes.FakeServiceManager
+		agentServer                *fakeagentserver.FakeAgentServer
 
 		fakeUUIDGenerator *fakeuuidgen.FakeGenerator
 
@@ -91,6 +93,7 @@ var _ = Describe("LinuxPlatform", func() {
 		devicePathResolver = fakedpresolv.NewFakeDevicePathResolver()
 		fakeDefaultNetworkResolver = &fakenet.FakeDefaultNetworkResolver{}
 		serviceManager = &servicemanagerfakes.FakeServiceManager{}
+		agentServer = &fakeagentserver.FakeAgentServer{}
 
 		fakeUUIDGenerator = fakeuuidgen.NewFakeGenerator()
 		fakeAuditLogger = fakeplat.NewFakeAuditLogger()
@@ -156,6 +159,7 @@ var _ = Describe("LinuxPlatform", func() {
 			fakeAuditLogger,
 			fakeLogsTarProvider,
 			serviceManager,
+			agentServer,
 		)
 	})
 
@@ -474,6 +478,7 @@ bosh_foobar:...`
 					fakeAuditLogger,
 					fakeLogsTarProvider,
 					serviceManager,
+					agentServer,
 				)
 				err := platformWithNoEphemeralDisk.SetupRootDisk("")
 
@@ -711,6 +716,7 @@ bosh_foobar:...`
 						fakeAuditLogger,
 						fakeLogsTarProvider,
 						serviceManager,
+						agentServer,
 					)
 					err := platformWithNoEphemeralDisk.SetupRootDisk("")
 
@@ -3787,6 +3793,7 @@ from-device-path  dm-0 NETAPP  ,LUN C-Mode
 					fakeAuditLogger,
 					fakeLogsTarProvider,
 					serviceManager,
+					agentServer,
 				)
 
 				err := platformWithISCSIType.MigratePersistentDisk("/from/path", "/to/path")

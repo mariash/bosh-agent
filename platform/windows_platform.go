@@ -18,6 +18,7 @@ import (
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
 
 	boshlogstarprovider "github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider"
+	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshdpresolv "github.com/cloudfoundry/bosh-agent/v2/infrastructure/devicepathresolver"
 	boshcert "github.com/cloudfoundry/bosh-agent/v2/platform/cert"
 	boshnet "github.com/cloudfoundry/bosh-agent/v2/platform/net"
@@ -138,6 +139,10 @@ func (p WindowsPlatform) GetVitalsService() (service boshvitals.Service) {
 
 func (p WindowsPlatform) GetServiceManager() servicemanager.ServiceManager {
 	return servicemanager.NewDummyServiceManager()
+}
+
+func (p WindowsPlatform) GetAgentServer() boshagentserver.AgentServer {
+	return boshagentserver.NewNoopServer(p.logger)
 }
 
 func (p WindowsPlatform) GetDevicePathResolver() (devicePathResolver boshdpresolv.DevicePathResolver) {

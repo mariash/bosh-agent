@@ -10,6 +10,7 @@ import (
 	"time"
 
 	boshlogstarprovider "github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider"
+	fakeagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver/agentserverfakes"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -1139,6 +1140,8 @@ var _ = Describe("bootstrap", func() {
 				state, err := boshplatform.NewBootstrapState(fs, "/tmp/agent_state.json")
 				Expect(err).NotTo(HaveOccurred())
 
+				agentServer := &fakeagentserver.FakeAgentServer{}
+
 				platform = boshplatform.NewLinuxPlatform(
 					fs,
 					runner,
@@ -1161,6 +1164,7 @@ var _ = Describe("bootstrap", func() {
 					boshplatform.NewDelayedAuditLogger(fakeplatform.NewFakeAuditLoggerProvider(), logger),
 					logsTarProvider,
 					&serviceManager,
+					agentServer,
 				)
 			})
 

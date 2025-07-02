@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider"
+	"github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	"github.com/cloudfoundry/bosh-agent/v2/infrastructure/devicepathresolver"
 	"github.com/cloudfoundry/bosh-agent/v2/platform"
 	"github.com/cloudfoundry/bosh-agent/v2/platform/cert"
@@ -86,6 +87,16 @@ type FakePlatform struct {
 	}
 	deleteEphemeralUsersMatchingReturnsOnCall map[int]struct {
 		result1 error
+	}
+	GetAgentServerStub        func() agentserver.AgentServer
+	getAgentServerMutex       sync.RWMutex
+	getAgentServerArgsForCall []struct {
+	}
+	getAgentServerReturns struct {
+		result1 agentserver.AgentServer
+	}
+	getAgentServerReturnsOnCall map[int]struct {
+		result1 agentserver.AgentServer
 	}
 	GetAgentSettingsPathStub        func(bool) string
 	getAgentSettingsPathMutex       sync.RWMutex
@@ -1101,6 +1112,59 @@ func (fake *FakePlatform) DeleteEphemeralUsersMatchingReturnsOnCall(i int, resul
 	}
 	fake.deleteEphemeralUsersMatchingReturnsOnCall[i] = struct {
 		result1 error
+	}{result1}
+}
+
+func (fake *FakePlatform) GetAgentServer() agentserver.AgentServer {
+	fake.getAgentServerMutex.Lock()
+	ret, specificReturn := fake.getAgentServerReturnsOnCall[len(fake.getAgentServerArgsForCall)]
+	fake.getAgentServerArgsForCall = append(fake.getAgentServerArgsForCall, struct {
+	}{})
+	stub := fake.GetAgentServerStub
+	fakeReturns := fake.getAgentServerReturns
+	fake.recordInvocation("GetAgentServer", []interface{}{})
+	fake.getAgentServerMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakePlatform) GetAgentServerCallCount() int {
+	fake.getAgentServerMutex.RLock()
+	defer fake.getAgentServerMutex.RUnlock()
+	return len(fake.getAgentServerArgsForCall)
+}
+
+func (fake *FakePlatform) GetAgentServerCalls(stub func() agentserver.AgentServer) {
+	fake.getAgentServerMutex.Lock()
+	defer fake.getAgentServerMutex.Unlock()
+	fake.GetAgentServerStub = stub
+}
+
+func (fake *FakePlatform) GetAgentServerReturns(result1 agentserver.AgentServer) {
+	fake.getAgentServerMutex.Lock()
+	defer fake.getAgentServerMutex.Unlock()
+	fake.GetAgentServerStub = nil
+	fake.getAgentServerReturns = struct {
+		result1 agentserver.AgentServer
+	}{result1}
+}
+
+func (fake *FakePlatform) GetAgentServerReturnsOnCall(i int, result1 agentserver.AgentServer) {
+	fake.getAgentServerMutex.Lock()
+	defer fake.getAgentServerMutex.Unlock()
+	fake.GetAgentServerStub = nil
+	if fake.getAgentServerReturnsOnCall == nil {
+		fake.getAgentServerReturnsOnCall = make(map[int]struct {
+			result1 agentserver.AgentServer
+		})
+	}
+	fake.getAgentServerReturnsOnCall[i] = struct {
+		result1 agentserver.AgentServer
 	}{result1}
 }
 
@@ -4438,6 +4502,8 @@ func (fake *FakePlatform) Invocations() map[string][][]interface{} {
 	defer fake.deleteARPEntryWithIPMutex.RUnlock()
 	fake.deleteEphemeralUsersMatchingMutex.RLock()
 	defer fake.deleteEphemeralUsersMatchingMutex.RUnlock()
+	fake.getAgentServerMutex.RLock()
+	defer fake.getAgentServerMutex.RUnlock()
 	fake.getAgentSettingsPathMutex.RLock()
 	defer fake.getAgentSettingsPathMutex.RUnlock()
 	fake.getAuditLoggerMutex.RLock()
