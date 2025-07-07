@@ -15,6 +15,14 @@ type DiskAssociation struct {
 	DiskCID string `json:"cid"`
 }
 
+type DiskManagementPrivilege string
+
+const (
+	ProvideDiskManagementPrivilege DiskManagementPrivilege = "provide"
+	DetachDiskManagementPrivilege  DiskManagementPrivilege = "detach"
+	DeleteDiskManagementPrivilege  DiskManagementPrivilege = "delete"
+)
+
 const (
 	RootUsername        = "root"
 	VCAPUsername        = "vcap"
@@ -314,7 +322,8 @@ type AgentEnv struct {
 }
 
 type AgentSettings struct {
-	TmpFS bool `json:"tmpfs"`
+	TmpFS                    bool                      `json:"tmpfs"`
+	DiskManagementPrivileges []DiskManagementPrivilege `json:"disk_management_privileges"`
 }
 
 type MBus struct {

@@ -88,9 +88,10 @@ type FakePlatform struct {
 	deleteEphemeralUsersMatchingReturnsOnCall map[int]struct {
 		result1 error
 	}
-	GetAgentServerStub        func() agentserver.AgentServer
+	GetAgentServerStub        func(settings.Service) agentserver.AgentServer
 	getAgentServerMutex       sync.RWMutex
 	getAgentServerArgsForCall []struct {
+		arg1 settings.Service
 	}
 	getAgentServerReturns struct {
 		result1 agentserver.AgentServer
@@ -1115,17 +1116,18 @@ func (fake *FakePlatform) DeleteEphemeralUsersMatchingReturnsOnCall(i int, resul
 	}{result1}
 }
 
-func (fake *FakePlatform) GetAgentServer() agentserver.AgentServer {
+func (fake *FakePlatform) GetAgentServer(arg1 settings.Service) agentserver.AgentServer {
 	fake.getAgentServerMutex.Lock()
 	ret, specificReturn := fake.getAgentServerReturnsOnCall[len(fake.getAgentServerArgsForCall)]
 	fake.getAgentServerArgsForCall = append(fake.getAgentServerArgsForCall, struct {
-	}{})
+		arg1 settings.Service
+	}{arg1})
 	stub := fake.GetAgentServerStub
 	fakeReturns := fake.getAgentServerReturns
-	fake.recordInvocation("GetAgentServer", []interface{}{})
+	fake.recordInvocation("GetAgentServer", []interface{}{arg1})
 	fake.getAgentServerMutex.Unlock()
 	if stub != nil {
-		return stub()
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
@@ -1139,10 +1141,17 @@ func (fake *FakePlatform) GetAgentServerCallCount() int {
 	return len(fake.getAgentServerArgsForCall)
 }
 
-func (fake *FakePlatform) GetAgentServerCalls(stub func() agentserver.AgentServer) {
+func (fake *FakePlatform) GetAgentServerCalls(stub func(settings.Service) agentserver.AgentServer) {
 	fake.getAgentServerMutex.Lock()
 	defer fake.getAgentServerMutex.Unlock()
 	fake.GetAgentServerStub = stub
+}
+
+func (fake *FakePlatform) GetAgentServerArgsForCall(i int) settings.Service {
+	fake.getAgentServerMutex.RLock()
+	defer fake.getAgentServerMutex.RUnlock()
+	argsForCall := fake.getAgentServerArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakePlatform) GetAgentServerReturns(result1 agentserver.AgentServer) {

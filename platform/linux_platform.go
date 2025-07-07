@@ -19,6 +19,7 @@ import (
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
 
 	boshlogstarprovider "github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider"
+	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
 	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshdpresolv "github.com/cloudfoundry/bosh-agent/v2/infrastructure/devicepathresolver"
 	"github.com/cloudfoundry/bosh-agent/v2/platform/cdrom"
@@ -113,7 +114,7 @@ type linux struct {
 	auditLogger            AuditLogger
 	logsTarProvider        boshlogstarprovider.LogsTarProvider
 	serviceManager         servicemanager.ServiceManager
-	agentServer            boshagentserver.AgentServer
+	taskService            boshtask.Service
 }
 
 func NewLinuxPlatform(
@@ -138,7 +139,7 @@ func NewLinuxPlatform(
 	auditLogger AuditLogger,
 	logsTarProvider boshlogstarprovider.LogsTarProvider,
 	serviceManager servicemanager.ServiceManager,
-	agentServer boshagentserver.AgentServer,
+	taskService boshtask.Service,
 ) Platform {
 	return &linux{
 		fs:                     fs,
@@ -162,7 +163,7 @@ func NewLinuxPlatform(
 		auditLogger:            auditLogger,
 		logsTarProvider:        logsTarProvider,
 		serviceManager:         serviceManager,
-		agentServer:            agentServer,
+		taskService:            taskService,
 	}
 }
 
@@ -217,8 +218,9 @@ func (p linux) GetServiceManager() servicemanager.ServiceManager {
 	return p.serviceManager
 }
 
-func (p linux) GetAgentServer() boshagentserver.AgentServer {
-	return p.agentServer
+func (p linux) GetAgentServer(settingsService boshsettings.Service) boshagentserver.AgentServer {
+	socketPath := filepath.Join(p.dirProvider.BoshDir(), "agent.sock")
+	return boshagentserver.NewSocketServer(p.logger, socketPath, p.taskService, settingsService)
 }
 
 func (p linux) GetFileContentsFromCDROM(fileName string) (content []byte, err error) {

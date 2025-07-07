@@ -141,7 +141,7 @@ func (p WindowsPlatform) GetServiceManager() servicemanager.ServiceManager {
 	return servicemanager.NewDummyServiceManager()
 }
 
-func (p WindowsPlatform) GetAgentServer() boshagentserver.AgentServer {
+func (p WindowsPlatform) GetAgentServer(_ boshsettings.Service) boshagentserver.AgentServer {
 	return boshagentserver.NewNoopServer(p.logger)
 }
 

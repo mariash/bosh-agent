@@ -132,7 +132,7 @@ func (a Agent) generateHeartbeats(errCh chan error) {
 }
 
 func (a Agent) startAgentServer(errCh chan error) {
-	agentServer := a.platform.GetAgentServer()
+	agentServer := a.platform.GetAgentServer(a.settingsService)
 	err := agentServer.Start(a.actionDispatcher.Dispatch)
 	if err != nil {
 		err = bosherr.WrapError(err, "Starting agent server")

@@ -118,7 +118,7 @@ func (p dummyPlatform) GetServiceManager() servicemanager.ServiceManager {
 	return servicemanager.NewDummyServiceManager()
 }
 
-func (p dummyPlatform) GetAgentServer() boshagentserver.AgentServer {
+func (p dummyPlatform) GetAgentServer(_ boshsettings.Service) boshagentserver.AgentServer {
 	return boshagentserver.NewNoopServer(p.logger)
 }
 

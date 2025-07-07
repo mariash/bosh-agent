@@ -6,9 +6,11 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"slices"
 
 	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
 	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
+	boshsettings "github.com/cloudfoundry/bosh-agent/v2/settings"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
@@ -101,21 +103,29 @@ type payloadForHandler struct {
 }
 
 type socketServer struct {
-	logger      boshlog.Logger
-	socketPath  string
-	taskService boshtask.Service
-	listener    net.Listener
+	logger          boshlog.Logger
+	socketPath      string
+	taskService     boshtask.Service
+	settingsService boshsettings.Service
+	listener        net.Listener
 }
 
-func NewSocketServer(logger boshlog.Logger, socketPath string, taskService boshtask.Service) AgentServer {
+func NewSocketServer(logger boshlog.Logger, socketPath string, taskService boshtask.Service, settingsService boshsettings.Service) AgentServer {
 	return &socketServer{
-		logger:      logger,
-		socketPath:  socketPath,
-		taskService: taskService,
+		logger:          logger,
+		socketPath:      socketPath,
+		taskService:     taskService,
+		settingsService: settingsService,
 	}
 }
 
 func (s *socketServer) Start(handlerFunc boshhandler.Func) error {
+	settings := s.settingsService.GetSettings()
+
+	if len(settings.Env.Bosh.Agent.Settings.DiskManagementPrivileges) == 0 {
+		return nil
+	}
+
 	err := os.Remove(s.socketPath)
 	if err != nil && !os.IsNotExist(err) {
 		return bosherr.WrapError(err, "Deleting existing socket")
@@ -132,17 +142,23 @@ func (s *socketServer) Start(handlerFunc boshhandler.Func) error {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /v1/disks", func(w http.ResponseWriter, r *http.Request) {
-		s.provideDisk(w, r, handlerFunc)
-	})
+	if slices.Contains(settings.Env.Bosh.Agent.Settings.DiskManagementPrivileges, boshsettings.ProvideDiskManagementPrivilege) {
+		mux.HandleFunc("POST /v1/disks", func(w http.ResponseWriter, r *http.Request) {
+			s.provideDisk(w, r, handlerFunc)
+		})
+	}
 
-	mux.HandleFunc("POST /v1/disks/{id}/detach", func(w http.ResponseWriter, r *http.Request) {
-		s.detachDisk(w, r, handlerFunc)
-	})
+	if slices.Contains(settings.Env.Bosh.Agent.Settings.DiskManagementPrivileges, boshsettings.DetachDiskManagementPrivilege) {
+		mux.HandleFunc("POST /v1/disks/{id}/detach", func(w http.ResponseWriter, r *http.Request) {
+			s.detachDisk(w, r, handlerFunc)
+		})
+	}
 
-	mux.HandleFunc("DELETE /v1/disks/{id}", func(w http.ResponseWriter, r *http.Request) {
-		s.deleteDisk(w, r, handlerFunc)
-	})
+	if slices.Contains(settings.Env.Bosh.Agent.Settings.DiskManagementPrivileges, boshsettings.DeleteDiskManagementPrivilege) {
+		mux.HandleFunc("DELETE /v1/disks/{id}", func(w http.ResponseWriter, r *http.Request) {
+			s.deleteDisk(w, r, handlerFunc)
+		})
+	}
 
 	mux.HandleFunc("GET /v1/tasks/{id}", s.taskStatus)
 

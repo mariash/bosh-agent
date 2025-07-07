@@ -16,6 +16,8 @@ import (
 	faketask "github.com/cloudfoundry/bosh-agent/v2/agent/task/fakes"
 	"github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	boshhandler "github.com/cloudfoundry/bosh-agent/v2/handler"
+	boshsettings "github.com/cloudfoundry/bosh-agent/v2/settings"
+	fakesettings "github.com/cloudfoundry/bosh-agent/v2/settings/fakes"
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -25,7 +27,9 @@ var _ = Describe("SocketServer", func() {
 	var (
 		tmpDir          string
 		socketPath      string
+		logger          *loggerfakes.FakeLogger
 		taskService     *faketask.FakeService
+		settingsService *fakesettings.FakeSettingsService
 		socketServer    agentserver.AgentServer
 		socketClient    *http.Client
 		receivedRequest boshhandler.Request
@@ -35,10 +39,19 @@ var _ = Describe("SocketServer", func() {
 		var err error
 		tmpDir, err = os.MkdirTemp("", "bosh-tests-")
 		Expect(err).ToNot(HaveOccurred())
-		logger := &loggerfakes.FakeLogger{}
+		logger = &loggerfakes.FakeLogger{}
 		socketPath = filepath.Join(tmpDir, "agent.sock")
 		taskService = faketask.NewFakeService()
-		socketServer = agentserver.NewSocketServer(logger, socketPath, taskService)
+		settingsService = &fakesettings.FakeSettingsService{}
+		settingsService.Settings.Env.Bosh.Agent.Settings.DiskManagementPrivileges = []boshsettings.DiskManagementPrivilege{
+			boshsettings.ProvideDiskManagementPrivilege,
+			boshsettings.DetachDiskManagementPrivilege,
+			boshsettings.DeleteDiskManagementPrivilege,
+		}
+	})
+
+	JustBeforeEach(func() {
+		socketServer = agentserver.NewSocketServer(logger, socketPath, taskService, settingsService)
 
 		receivedRequest = nil
 		go func() {
@@ -57,6 +70,7 @@ var _ = Describe("SocketServer", func() {
 				},
 			},
 		}
+
 		waitForServerToStart(socketClient)
 	})
 
@@ -91,6 +105,24 @@ var _ = Describe("SocketServer", func() {
 				Expect(httpResponse.StatusCode).To(Equal(http.StatusBadRequest))
 			})
 		})
+
+		Context("when disk privileges don't allow to provide disks", func() {
+			BeforeEach(func() {
+				settingsService.Settings.Env.Bosh.Agent.Settings.DiskManagementPrivileges = []boshsettings.DiskManagementPrivilege{
+					boshsettings.DetachDiskManagementPrivilege,
+					boshsettings.DeleteDiskManagementPrivilege,
+				}
+			})
+
+			It("returns an error", func() {
+				payload := []byte(`{"disk_name":"some-disk-name","disk_pool_name":"some-disk-pool-name","disk_size":1024}`)
+
+				httpResponse, err := socketClient.Post("http://unix/v1/disks", "application/json", bytes.NewBuffer(payload))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(httpResponse.StatusCode).To(Equal(http.StatusNotFound))
+			})
+		})
 	})
 
 	Describe("POST /v1/disks/{id}/detach", func() {
@@ -116,6 +148,24 @@ var _ = Describe("SocketServer", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(httpResponse.StatusCode).To(Equal(http.StatusMethodNotAllowed))
+			})
+		})
+
+		Context("when disk privileges don't allow to detach disks", func() {
+			BeforeEach(func() {
+				settingsService.Settings.Env.Bosh.Agent.Settings.DiskManagementPrivileges = []boshsettings.DiskManagementPrivilege{
+					boshsettings.ProvideDiskManagementPrivilege,
+					boshsettings.DeleteDiskManagementPrivilege,
+				}
+			})
+
+			It("returns an error", func() {
+				payload := []byte(`{}`)
+
+				httpResponse, err := socketClient.Post("http://unix/v1/disks/some-disk-name/detach", "application/json", bytes.NewBuffer(payload))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(httpResponse.StatusCode).To(Equal(http.StatusNotFound))
 			})
 		})
 	})
@@ -147,6 +197,25 @@ var _ = Describe("SocketServer", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(httpResponse.StatusCode).To(Equal(http.StatusMethodNotAllowed))
+			})
+		})
+
+		Context("when disk privileges don't allow to delete disks", func() {
+			BeforeEach(func() {
+				settingsService.Settings.Env.Bosh.Agent.Settings.DiskManagementPrivileges = []boshsettings.DiskManagementPrivilege{
+					boshsettings.ProvideDiskManagementPrivilege,
+					boshsettings.DetachDiskManagementPrivilege,
+				}
+			})
+
+			It("returns an error", func() {
+				req, err := http.NewRequest(http.MethodDelete, "http://unix/v1/disks/some-disk-name", nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				httpResponse, err := socketClient.Do(req)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(httpResponse.StatusCode).To(Equal(http.StatusNotFound))
 			})
 		})
 	})

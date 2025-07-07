@@ -42,7 +42,7 @@ type Platform interface {
 	GetAuditLogger() AuditLogger
 	GetDevicePathResolver() (devicePathResolver boshdpresolv.DevicePathResolver)
 	GetServiceManager() servicemanager.ServiceManager
-	GetAgentServer() boshagentserver.AgentServer
+	GetAgentServer(settingsService boshsettings.Service) boshagentserver.AgentServer
 	GetAgentSettingsPath(tmpfs bool) string
 	GetPersistentDiskSettingsPath(tmpfs bool) string
 	GetUpdateSettingsPath(tmpfs bool) string

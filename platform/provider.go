@@ -2,7 +2,6 @@ package platform
 
 import (
 	gonet "net"
-	"path/filepath"
 	"time"
 
 	"code.cloudfoundry.org/clock"
@@ -16,7 +15,6 @@ import (
 
 	boshlogstarprovider "github.com/cloudfoundry/bosh-agent/v2/agent/logstarprovider"
 	boshtask "github.com/cloudfoundry/bosh-agent/v2/agent/task"
-	boshagentserver "github.com/cloudfoundry/bosh-agent/v2/agentserver"
 	"github.com/cloudfoundry/bosh-agent/v2/infrastructure/devicepathresolver"
 	boshcdrom "github.com/cloudfoundry/bosh-agent/v2/platform/cdrom"
 	boshcert "github.com/cloudfoundry/bosh-agent/v2/platform/cert"
@@ -156,9 +154,6 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 	uuidGenerator := boshuuid.NewGenerator()
 	logsTarProvider := boshlogstarprovider.NewLogsTarProvider(compressor, copier, dirProvider)
 
-	socketPath := filepath.Join(dirProvider.BoshDir(), "agent.sock")
-	socketServer := boshagentserver.NewSocketServer(logger, socketPath, taskService)
-
 	var centos = func() Platform {
 		return NewLinuxPlatform(
 			fs,
@@ -182,7 +177,7 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 			auditLogger,
 			logsTarProvider,
 			serviceManager,
-			socketServer,
+			taskService,
 		)
 	}
 
@@ -209,7 +204,7 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 			auditLogger,
 			logsTarProvider,
 			serviceManager,
-			socketServer,
+			taskService,
 		)
 	}
 
